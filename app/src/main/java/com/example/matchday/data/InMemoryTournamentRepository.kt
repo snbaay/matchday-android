@@ -1,6 +1,7 @@
 package com.example.matchday.data
 
 import com.example.matchday.model.AppData
+import com.example.matchday.model.Match
 import com.example.matchday.model.Team
 import com.example.matchday.model.Tournament
 import java.util.UUID
@@ -53,5 +54,62 @@ class InMemoryTournamentRepository : TournamentRepository {
             data.copy(teams = data.teams + team)
         }
         return Result.success(team.id)
+    }
+
+    override fun createMatch(
+        tournamentId: String,
+        homeTeamId: String,
+        awayTeamId: String
+    ): Result<String> {
+        val current = mutableState.value
+        if (current.tournaments.none { it.id == tournamentId }) {
+            return Result.failure(IllegalArgumentException("Tournament not found."))
+        }
+        if (homeTeamId == awayTeamId) {
+            return Result.failure(IllegalArgumentException("Choose two different teams."))
+        }
+        val homeTeam = current.teams.find { it.id == homeTeamId }
+        val awayTeam = current.teams.find { it.id == awayTeamId }
+        if (homeTeam == null || awayTeam == null ||
+            homeTeam.tournamentId != tournamentId || awayTeam.tournamentId != tournamentId
+        ) {
+            return Result.failure(
+                IllegalArgumentException("Both teams must belong to this tournament.")
+            )
+        }
+        val duplicate = current.matches.any {
+            it.tournamentId == tournamentId &&
+                ((it.homeTeamId == homeTeamId && it.awayTeamId == awayTeamId) ||
+                    (it.homeTeamId == awayTeamId && it.awayTeamId == homeTeamId))
+        }
+        if (duplicate) {
+            return Result.failure(IllegalArgumentException("This pair already has a match."))
+        }
+
+        val match = Match(UUID.randomUUID().toString(), tournamentId, homeTeamId, awayTeamId)
+        mutableState.update { data ->
+            data.copy(matches = data.matches + match)
+        }
+        return Result.success(match.id)
+    }
+
+    override fun saveScore(matchId: String, homeScore: Int, awayScore: Int): Result<Unit> {
+        if (homeScore !in 0..99 || awayScore !in 0..99) {
+            return Result.failure(IllegalArgumentException("Scores must be between 0 and 99."))
+        }
+        if (mutableState.value.matches.none { it.id == matchId }) {
+            return Result.failure(IllegalArgumentException("Match not found."))
+        }
+
+        mutableState.update { data ->
+            data.copy(matches = data.matches.map { match ->
+                if (match.id == matchId) {
+                    match.copy(homeScore = homeScore, awayScore = awayScore)
+                } else {
+                    match
+                }
+            })
+        }
+        return Result.success(Unit)
     }
 }
