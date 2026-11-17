@@ -3,9 +3,11 @@ package com.example.matchday.ui.tournaments
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -52,7 +54,15 @@ fun TournamentDashboardScreen(
                 text = "Matches: $matchCount",
                 style = MaterialTheme.typography.bodyLarge
             )
-            // Section navigation buttons will use the callbacks in P4-08.
+            Button(onClick = onTeams, modifier = Modifier.fillMaxWidth()) {
+                Text("Teams")
+            }
+            Button(onClick = onMatches, modifier = Modifier.fillMaxWidth()) {
+                Text("Matches")
+            }
+            Button(onClick = onStandings, modifier = Modifier.fillMaxWidth()) {
+                Text("Standings")
+            }
         }
     }
 }
