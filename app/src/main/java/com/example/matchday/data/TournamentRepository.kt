@@ -7,4 +7,5 @@ interface TournamentRepository {
     val state: StateFlow<AppData>
 
     fun createTournament(name: String): Result<String>
+    fun addTeam(tournamentId: String, name: String): Result<String>
 }
