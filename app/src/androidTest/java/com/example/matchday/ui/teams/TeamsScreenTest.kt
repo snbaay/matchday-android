@@ -68,5 +68,43 @@ class TeamsScreenTest {
         composeRule.runOnIdle {
             assertEquals(listOf("arsenal", "Chelsea"), submittedNames)
         }
+        composeRule.onNode(isDialog()).assertDoesNotExist()
+    }
+
+    @Test
+    fun successfulSaveClosesDialogAndClearsFieldWhenReopened() {
+        val submittedNames = mutableListOf<String>()
+
+        composeRule.setContent {
+            MaterialTheme {
+                TeamsScreen(
+                    tournamentName = "Cup",
+                    teams = emptyList(),
+                    onAddTeam = { name ->
+                        submittedNames.add(name)
+                        Result.success("chelsea-id")
+                    },
+                    onBack = {}
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Add Team").performClick()
+        // Establish a previous message so that reopening also checks its removal.
+        composeRule.onNodeWithText("Save").performClick()
+        composeRule.onNodeWithText("Enter team name").assertIsDisplayed()
+        composeRule.onNode(hasSetTextAction()).performTextInput("Chelsea")
+        composeRule.onNodeWithText("Save").performClick()
+
+        composeRule.runOnIdle {
+            assertEquals(listOf("Chelsea"), submittedNames)
+        }
+        composeRule.onNode(isDialog()).assertDoesNotExist()
+
+        composeRule.onNodeWithText("Add Team").performClick()
+        composeRule.onNode(isDialog()).assertIsDisplayed()
+        composeRule.onNode(hasSetTextAction()).assertTextEquals("Team name", "")
+        composeRule.onNodeWithText("Enter team name").assertDoesNotExist()
+        composeRule.onNodeWithText("Team added").assertDoesNotExist()
     }
 }
