@@ -97,11 +97,18 @@ fun TeamsScreen(
             },
             confirmButton = {
                 TextButton(onClick = {
-                    val result = onAddTeam(teamName)
-                    resultMessage = if (result.isSuccess) {
-                        "Team added"
-                    } else {
-                        result.exceptionOrNull()?.message ?: "Cannot add team"
+                    val name = teamName.trim()
+                    resultMessage = when {
+                        name.isEmpty() -> "Enter team name"
+                        name.length > 40 -> "Team name must be 1–40 characters"
+                        else -> {
+                            val result = onAddTeam(name)
+                            if (result.isSuccess) {
+                                "Team added"
+                            } else {
+                                result.exceptionOrNull()?.message ?: "Cannot add team"
+                            }
+                        }
                     }
                 }) {
                     Text("Save")
