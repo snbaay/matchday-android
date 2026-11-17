@@ -30,6 +30,7 @@ fun TournamentListScreen(
 ) {
     var showCreateDialog by rememberSaveable { mutableStateOf(false) }
     var tournamentName by rememberSaveable { mutableStateOf("") }
+    var createError by rememberSaveable { mutableStateOf<String?>(null) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -69,13 +70,21 @@ fun TournamentListScreen(
             onDismissRequest = {
                 showCreateDialog = false
                 tournamentName = ""
+                createError = null
             },
             title = { Text("Create Tournament") },
             text = {
                 OutlinedTextField(
                     value = tournamentName,
-                    onValueChange = { tournamentName = it },
+                    onValueChange = {
+                        tournamentName = it
+                        createError = null
+                    },
                     label = { Text("Tournament name") },
+                    isError = createError != null,
+                    supportingText = {
+                        createError?.let { Text(it) }
+                    },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -83,10 +92,20 @@ fun TournamentListScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        val result = onCreateTournament(tournamentName.trim())
-                        if (result.isSuccess) {
-                            showCreateDialog = false
-                            tournamentName = ""
+                        val name = tournamentName.trim()
+                        if (name.isBlank()) {
+                            createError = "Tournament name cannot be blank"
+                        } else {
+                            val result = onCreateTournament(name)
+                            if (result.isSuccess) {
+                                showCreateDialog = false
+                                tournamentName = ""
+                                createError = null
+                            } else {
+                                createError = result.exceptionOrNull()?.message
+                                    ?.takeIf { it.isNotBlank() }
+                                    ?: "Cannot create tournament"
+                            }
                         }
                     }
                 ) {
@@ -98,6 +117,7 @@ fun TournamentListScreen(
                     onClick = {
                         showCreateDialog = false
                         tournamentName = ""
+                        createError = null
                     }
                 ) {
                     Text("Cancel")
