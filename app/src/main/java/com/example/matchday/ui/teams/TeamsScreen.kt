@@ -47,10 +47,7 @@ fun TeamsScreen(
             contentPadding = PaddingValues(16.dp)
         ) {
             items(teams, key = { team -> team.id }) { team ->
-                Text(
-                    text = team.name,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
+                TeamRow(team = team)
             }
         }
     }
