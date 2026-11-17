@@ -155,12 +155,8 @@ fun MatchesScreen(
         CreateMatchDialog(
             teams = teams,
             onDismiss = { showCreateDialog = false },
-            onConfirm = { homeId, awayId ->
-                val result = onCreateMatch(homeId, awayId)
-                if (result.isSuccess) {
-                    showCreateDialog = false
-                }
-            }
+            onCreateMatch = onCreateMatch,
+            onCreated = { showCreateDialog = false }
         )
     }
 }
@@ -170,13 +166,15 @@ fun MatchesScreen(
 private fun CreateMatchDialog(
     teams: List<Team>,
     onDismiss: () -> Unit,
-    onConfirm: (String, String) -> Unit
+    onCreateMatch: (String, String) -> Result<String>,
+    onCreated: () -> Unit
 ) {
     BasicAlertDialog(onDismissRequest = onDismiss) {
         CreateMatchDialogCard(
             teams = teams,
             onDismiss = onDismiss,
-            onConfirm = onConfirm
+            onCreateMatch = onCreateMatch,
+            onCreated = onCreated
         )
     }
 }
@@ -185,14 +183,24 @@ private fun CreateMatchDialog(
 private fun CreateMatchDialogCard(
     teams: List<Team>,
     onDismiss: () -> Unit,
-    onConfirm: (String, String) -> Unit,
-    modifier: Modifier = Modifier
+    onCreateMatch: (String, String) -> Result<String>,
+    onCreated: () -> Unit,
+    modifier: Modifier = Modifier,
+    initialErrorMessage: String? = null
 ) {
     var homeTeamId by rememberSaveable(teams) {
         mutableStateOf(teams.firstOrNull()?.id.orEmpty())
     }
     var awayTeamId by rememberSaveable(teams) {
         mutableStateOf(teams.getOrNull(1)?.id ?: teams.firstOrNull()?.id.orEmpty())
+    }
+    var errorMessage by rememberSaveable { mutableStateOf(initialErrorMessage) }
+
+    val isSameTeam = homeTeamId.isNotEmpty() && homeTeamId == awayTeamId
+    val displayedError = if (isSameTeam) {
+        "Home and away teams must be different."
+    } else {
+        errorMessage
     }
 
     Surface(
@@ -217,15 +225,36 @@ private fun CreateMatchDialogCard(
                 label = "Home team",
                 teams = teams,
                 selectedTeamId = homeTeamId,
-                onSelectTeam = { homeTeamId = it }
+                onSelectTeam = {
+                    homeTeamId = it
+                    errorMessage = null
+                }
             )
 
             TeamSelectorField(
                 label = "Away team",
                 teams = teams,
                 selectedTeamId = awayTeamId,
-                onSelectTeam = { awayTeamId = it }
+                onSelectTeam = {
+                    awayTeamId = it
+                    errorMessage = null
+                }
             )
+
+            if (displayedError != null) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                ) {
+                    Text(
+                        text = displayedError,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -235,7 +264,21 @@ private fun CreateMatchDialogCard(
                     Text("Cancel")
                 }
                 Button(
-                    onClick = { onConfirm(homeTeamId, awayTeamId) }
+                    enabled = !isSameTeam && homeTeamId.isNotBlank() && awayTeamId.isNotBlank(),
+                    onClick = {
+                        if (homeTeamId == awayTeamId) {
+                            errorMessage = "Home and away teams must be different."
+                            return@Button
+                        }
+                        val result = onCreateMatch(homeTeamId, awayTeamId)
+                        if (result.isSuccess) {
+                            errorMessage = null
+                            onCreated()
+                        } else {
+                            errorMessage = result.exceptionOrNull()?.message
+                                ?: "Cannot create match"
+                        }
+                    }
                 ) {
                     Text("Create")
                 }
@@ -410,7 +453,35 @@ private fun CreateMatchDialogPreview() {
                 CreateMatchDialogCard(
                     teams = previewTeams,
                     onDismiss = {},
-                    onConfirm = { _, _ -> }
+                    onCreateMatch = { _, _ -> Result.success("m1") },
+                    onCreated = {}
+                )
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun CreateMatchDialogValidationPreview() {
+    val previewTeams = listOf(
+        Team(id = "t1", tournamentId = "tour1", name = "Real Madrid"),
+        Team(id = "t2", tournamentId = "tour1", name = "Barcelona")
+    )
+
+    MatchdayTheme {
+        Surface(
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Box(modifier = Modifier.padding(16.dp)) {
+                CreateMatchDialogCard(
+                    teams = previewTeams,
+                    onDismiss = {},
+                    onCreateMatch = { _, _ ->
+                        Result.failure(IllegalArgumentException("These teams already have a match."))
+                    },
+                    onCreated = {},
+                    initialErrorMessage = "These teams already have a match."
                 )
             }
         }
