@@ -104,7 +104,9 @@ fun TeamsScreen(
                         else -> {
                             val result = onAddTeam(name)
                             if (result.isSuccess) {
-                                "Team added"
+                                teamName = ""
+                                showAddTeamDialog = false
+                                null
                             } else {
                                 result.exceptionOrNull()?.message ?: "Cannot add team"
                             }
