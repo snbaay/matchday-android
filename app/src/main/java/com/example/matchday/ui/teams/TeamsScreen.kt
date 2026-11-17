@@ -1,16 +1,24 @@
 package com.example.matchday.ui.teams
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -24,6 +32,10 @@ fun TeamsScreen(
     onAddTeam: (String) -> Result<String>,
     onBack: () -> Unit
 ) {
+    var showAddTeamDialog by rememberSaveable { mutableStateOf(false) }
+    var teamName by rememberSaveable { mutableStateOf("") }
+    var resultMessage by rememberSaveable { mutableStateOf<String?>(null) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -46,9 +58,60 @@ fun TeamsScreen(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
             contentPadding = PaddingValues(16.dp)
         ) {
+            item {
+                Button(onClick = {
+                    resultMessage = null
+                    showAddTeamDialog = true
+                }) {
+                    Text("Add Team")
+                }
+            }
             items(teams, key = { team -> team.id }) { team ->
                 TeamRow(team = team)
             }
         }
+    }
+
+    if (showAddTeamDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddTeamDialog = false },
+            title = { Text("Add Team") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = teamName,
+                        onValueChange = {
+                            teamName = it
+                            resultMessage = null
+                        },
+                        label = { Text("Team name") },
+                        singleLine = true
+                    )
+                    resultMessage?.let { message ->
+                        Text(
+                            text = message,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val result = onAddTeam(teamName)
+                    resultMessage = if (result.isSuccess) {
+                        "Team added"
+                    } else {
+                        result.exceptionOrNull()?.message ?: "Cannot add team"
+                    }
+                }) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddTeamDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
