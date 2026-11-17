@@ -4,15 +4,20 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -20,6 +25,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -39,12 +49,13 @@ fun MatchesScreen(
     tournamentName: String,
     teams: List<Team>,
     matches: List<Match>,
-    onCreateMatch: (String, String) -> Result<String>, // Used by Create Match dialog in P2-04/P2-05.
+    onCreateMatch: (String, String) -> Result<String>,
     onOpenScore: (String) -> Unit,
     onBack: () -> Unit
 ) {
     val teamNamesById = teams.associate { it.id to it.name }
     val canCreateMatch = teams.size >= 2
+    var showCreateDialog by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -88,7 +99,7 @@ fun MatchesScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Button(
-                onClick = { /* Create Match dialog will open here in P2-04. */ },
+                onClick = { showCreateDialog = true },
                 enabled = canCreateMatch,
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -135,6 +146,148 @@ fun MatchesScreen(
                             onClick = { onOpenScore(match.id) }
                         )
                     }
+                }
+            }
+        }
+    }
+
+    if (showCreateDialog && canCreateMatch) {
+        CreateMatchDialog(
+            teams = teams,
+            onDismiss = { showCreateDialog = false },
+            onConfirm = { homeId, awayId ->
+                val result = onCreateMatch(homeId, awayId)
+                if (result.isSuccess) {
+                    showCreateDialog = false
+                }
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CreateMatchDialog(
+    teams: List<Team>,
+    onDismiss: () -> Unit,
+    onConfirm: (String, String) -> Unit
+) {
+    BasicAlertDialog(onDismissRequest = onDismiss) {
+        CreateMatchDialogCard(
+            teams = teams,
+            onDismiss = onDismiss,
+            onConfirm = onConfirm
+        )
+    }
+}
+
+@Composable
+private fun CreateMatchDialogCard(
+    teams: List<Team>,
+    onDismiss: () -> Unit,
+    onConfirm: (String, String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var homeTeamId by rememberSaveable(teams) {
+        mutableStateOf(teams.firstOrNull()?.id.orEmpty())
+    }
+    var awayTeamId by rememberSaveable(teams) {
+        mutableStateOf(teams.getOrNull(1)?.id ?: teams.firstOrNull()?.id.orEmpty())
+    }
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        tonalElevation = 6.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Create Match",
+                style = MaterialTheme.typography.titleLarge
+            )
+
+            TeamSelectorField(
+                label = "Home team",
+                teams = teams,
+                selectedTeamId = homeTeamId,
+                onSelectTeam = { homeTeamId = it }
+            )
+
+            TeamSelectorField(
+                label = "Away team",
+                teams = teams,
+                selectedTeamId = awayTeamId,
+                onSelectTeam = { awayTeamId = it }
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+            ) {
+                TextButton(onClick = onDismiss) {
+                    Text("Cancel")
+                }
+                Button(
+                    onClick = { onConfirm(homeTeamId, awayTeamId) }
+                ) {
+                    Text("Create")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TeamSelectorField(
+    label: String,
+    teams: List<Team>,
+    selectedTeamId: String,
+    onSelectTeam: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedTeamName = teams.find { it.id == selectedTeamId }?.name ?: "Select team"
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(
+                onClick = { expanded = true },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = selectedTeamName,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                teams.forEach { team ->
+                    DropdownMenuItem(
+                        text = { Text(team.name) },
+                        onClick = {
+                            onSelectTeam(team.id)
+                            expanded = false
+                        }
+                    )
                 }
             }
         }
@@ -237,5 +390,29 @@ private fun MatchesScreenEmptyOneTeamPreview() {
             onOpenScore = {},
             onBack = {}
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun CreateMatchDialogPreview() {
+    val previewTeams = listOf(
+        Team(id = "t1", tournamentId = "tour1", name = "Real Madrid"),
+        Team(id = "t2", tournamentId = "tour1", name = "Barcelona"),
+        Team(id = "t3", tournamentId = "tour1", name = "Arsenal")
+    )
+
+    MatchdayTheme {
+        Surface(
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Box(modifier = Modifier.padding(16.dp)) {
+                CreateMatchDialogCard(
+                    teams = previewTeams,
+                    onDismiss = {},
+                    onConfirm = { _, _ -> }
+                )
+            }
+        }
     }
 }
