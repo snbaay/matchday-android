@@ -36,9 +36,7 @@ import androidx.compose.ui.unit.dp
 import com.example.matchday.model.Match
 import com.example.matchday.ui.theme.MatchdayTheme
 
-/**
- * Displays team names and two numeric score inputs for entering or editing a match score.
- */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScoreScreen(
     match: Match,
@@ -47,39 +45,17 @@ fun ScoreScreen(
     onSaveScore: (Int, Int) -> Result<Unit>,
     onBack: () -> Unit
 ) {
-    ScoreScreenContent(
-        match = match,
-        homeTeamName = homeTeamName,
-        awayTeamName = awayTeamName,
-        onSaveScore = onSaveScore,
-        onBack = onBack
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ScoreScreenContent(
-    match: Match,
-    homeTeamName: String,
-    awayTeamName: String,
-    onSaveScore: (Int, Int) -> Result<Unit>,
-    onBack: () -> Unit,
-    initialHomeInput: String = match.homeScore?.toString().orEmpty(),
-    initialAwayInput: String = match.awayScore?.toString().orEmpty(),
-    initialErrorMessage: String? = null,
-    initialHasAttemptedSave: Boolean = false
-) {
     var homeScoreInput by rememberSaveable(match.id, match.homeScore) {
-        mutableStateOf(initialHomeInput)
+        mutableStateOf(match.homeScore?.toString() ?: "")
     }
     var awayScoreInput by rememberSaveable(match.id, match.awayScore) {
-        mutableStateOf(initialAwayInput)
+        mutableStateOf(match.awayScore?.toString() ?: "")
     }
     var errorMessage by rememberSaveable(match.id) {
-        mutableStateOf(initialErrorMessage)
+        mutableStateOf<String?>(null)
     }
     var hasAttemptedSave by rememberSaveable(match.id) {
-        mutableStateOf(initialHasAttemptedSave)
+        mutableStateOf(false)
     }
 
     val hasExistingScore = match.homeScore != null && match.awayScore != null
@@ -174,7 +150,8 @@ private fun ScoreScreenContent(
                 }
             }
 
-            errorMessage?.let { message ->
+            val activeError = errorMessage
+            if (activeError != null) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
@@ -182,7 +159,7 @@ private fun ScoreScreenContent(
                     contentColor = MaterialTheme.colorScheme.onErrorContainer
                 ) {
                     Text(
-                        text = message,
+                        text = activeError,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(12.dp)
                     )
@@ -193,18 +170,18 @@ private fun ScoreScreenContent(
                 onClick = {
                     hasAttemptedSave = true
                     val validationError = validateScoreInputs(homeScoreInput, awayScoreInput)
+                    val homeScore = homeScoreInput.trim().toIntOrNull()
+                    val awayScore = awayScoreInput.trim().toIntOrNull()
                     if (validationError != null) {
                         errorMessage = validationError
-                        return@Button
-                    }
-                    val homeScore = homeScoreInput.trim().toIntOrNull() ?: return@Button
-                    val awayScore = awayScoreInput.trim().toIntOrNull() ?: return@Button
-                    val result = onSaveScore(homeScore, awayScore)
-                    if (result.isSuccess) {
-                        errorMessage = null
-                        onBack()
-                    } else {
-                        errorMessage = result.exceptionOrNull()?.message ?: "Cannot save score"
+                    } else if (homeScore != null && awayScore != null) {
+                        val result = onSaveScore(homeScore, awayScore)
+                        if (result.isSuccess) {
+                            errorMessage = null
+                            onBack()
+                        } else {
+                            errorMessage = result.exceptionOrNull()?.message ?: "Cannot save score"
+                        }
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
@@ -323,29 +300,6 @@ private fun ScoreScreenFinishedPreview() {
             awayTeamName = "Barcelona",
             onSaveScore = { _, _ -> Result.success(Unit) },
             onBack = {}
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun ScoreScreenInvalidPreview() {
-    MatchdayTheme {
-        ScoreScreenContent(
-            match = Match(
-                id = "m3",
-                tournamentId = "t1",
-                homeTeamId = "team1",
-                awayTeamId = "team2"
-            ),
-            homeTeamName = "Arsenal",
-            awayTeamName = "Liverpool",
-            onSaveScore = { _, _ -> Result.success(Unit) },
-            onBack = {},
-            initialHomeInput = "105",
-            initialAwayInput = "1",
-            initialErrorMessage = "Scores must be between 0 and 99.",
-            initialHasAttemptedSave = true
         )
     }
 }

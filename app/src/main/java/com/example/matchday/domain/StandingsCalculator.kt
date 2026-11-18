@@ -4,22 +4,19 @@ import com.example.matchday.model.Match
 import com.example.matchday.model.StandingRow
 import com.example.matchday.model.Team
 
-/**
- * Pure standings calculator that recomputes tournament rankings from finished matches.
- */
-object StandingsCalculator {
+class CalculateStandingsUseCase {
 
     private class TeamStats(
         val teamId: String,
         val teamName: String
     ) {
-        var played: Int = 0
-        var won: Int = 0
-        var drawn: Int = 0
-        var lost: Int = 0
-        var goalsFor: Int = 0
-        var goalsAgainst: Int = 0
-        var points: Int = 0
+        var played = 0
+        var won = 0
+        var drawn = 0
+        var lost = 0
+        var goalsFor = 0
+        var goalsAgainst = 0
+        var points = 0
 
         fun toStandingRow(): StandingRow = StandingRow(
             teamId = teamId,
@@ -34,7 +31,7 @@ object StandingsCalculator {
         )
     }
 
-    fun calculate(teams: List<Team>, matches: List<Match>): List<StandingRow> {
+    operator fun invoke(teams: List<Team>, matches: List<Match>): List<StandingRow> {
         val statsByTeamId = LinkedHashMap<String, TeamStats>(teams.size)
         for (team in teams) {
             statsByTeamId.putIfAbsent(team.id, TeamStats(team.id, team.name))
@@ -88,5 +85,13 @@ object StandingsCalculator {
                     .thenBy { it.teamName }
                     .thenBy { it.teamId }
             )
+    }
+}
+
+object StandingsCalculator {
+    private val calculateStandingsUseCase = CalculateStandingsUseCase()
+
+    fun calculate(teams: List<Team>, matches: List<Match>): List<StandingRow> {
+        return calculateStandingsUseCase(teams, matches)
     }
 }

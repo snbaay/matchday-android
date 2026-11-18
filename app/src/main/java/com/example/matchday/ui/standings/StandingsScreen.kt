@@ -32,9 +32,6 @@ import androidx.compose.ui.unit.dp
 import com.example.matchday.model.StandingRow
 import com.example.matchday.ui.theme.MatchdayTheme
 
-/**
- * Displays the tournament standings table with position, team stats, goal difference, and points.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StandingsScreen(
