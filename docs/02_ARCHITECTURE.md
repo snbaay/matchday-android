@@ -1,5 +1,7 @@
 # 02 — Архитектура Android / MVVM
 
+> Эта схема отражает исходный контракт Week 12. Текущая структура domain/data/presentation и DI описана в `09_CLEAN_ARCHITECTURE.md`.
+
 ## Главный принцип
 
 **Одна Activity, один shared ViewModel, один repository — для Week 12 достаточно.** Не создавать пять отдельных ViewModel, Hilt и модульную архитектуру ради сложности.
