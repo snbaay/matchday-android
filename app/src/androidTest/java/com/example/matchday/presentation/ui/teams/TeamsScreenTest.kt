@@ -282,7 +282,6 @@ class TeamsScreenTest {
         }
 
         composeRule.onNodeWithText("Add Team").performClick()
-        // Establish a previous message so that reopening also checks its removal.
         composeRule.onNodeWithText("Save").performClick()
         composeRule.onNodeWithText("Enter team name").assertIsDisplayed()
         composeRule.onNode(hasSetTextAction()).performTextInput("Chelsea")
