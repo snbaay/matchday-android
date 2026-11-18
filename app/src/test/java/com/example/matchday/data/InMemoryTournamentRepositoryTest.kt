@@ -1,8 +1,11 @@
 package com.example.matchday.data
 
-import com.example.matchday.model.AppData
-import com.example.matchday.model.Team
-import com.example.matchday.model.Tournament
+import com.example.matchday.data.local.InMemoryTournamentDataSource
+import com.example.matchday.domain.repository.TournamentRepository
+
+import com.example.matchday.domain.model.AppData
+import com.example.matchday.domain.model.Team
+import com.example.matchday.domain.model.Tournament
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -10,7 +13,7 @@ import org.junit.Test
 class InMemoryTournamentRepositoryTest {
     @Test
     fun addTeamPublishesTrimmedTeamAndPreservesPreviousState() {
-        val repository: TournamentRepository = InMemoryTournamentRepository()
+        val repository: TournamentRepository = InMemoryTournamentRepository(InMemoryTournamentDataSource())
         val tournamentId = repository.createTournament("Cup").getOrThrow()
         val previousState = repository.state.value
 
@@ -26,7 +29,7 @@ class InMemoryTournamentRepositoryTest {
 
     @Test
     fun addTeamRejectsBlankNamesWithoutChangingState() {
-        val repository = InMemoryTournamentRepository()
+        val repository = InMemoryTournamentRepository(InMemoryTournamentDataSource())
         val tournamentId = repository.createTournament("Cup").getOrThrow()
         val previousState = repository.state.value
 
@@ -40,7 +43,7 @@ class InMemoryTournamentRepositoryTest {
 
     @Test
     fun addTeamRejectsDuplicatesIgnoringCaseAndSurroundingWhitespace() {
-        val repository = InMemoryTournamentRepository()
+        val repository = InMemoryTournamentRepository(InMemoryTournamentDataSource())
         val tournamentId = repository.createTournament("Cup").getOrThrow()
         repository.addTeam(tournamentId, "  Real Madrid  ").getOrThrow()
         val previousState = repository.state.value
@@ -55,7 +58,7 @@ class InMemoryTournamentRepositoryTest {
 
     @Test
     fun addTeamAllowsSameNameInDifferentTournaments() {
-        val repository = InMemoryTournamentRepository()
+        val repository = InMemoryTournamentRepository(InMemoryTournamentDataSource())
         val firstTournamentId = repository.createTournament("First Cup").getOrThrow()
         val secondTournamentId = repository.createTournament("Second Cup").getOrThrow()
         val firstId = repository.addTeam(firstTournamentId, "Arsenal").getOrThrow()
@@ -74,7 +77,7 @@ class InMemoryTournamentRepositoryTest {
 
     @Test
     fun addTeamRejectsMissingTournamentWithoutChangingState() {
-        val repository = InMemoryTournamentRepository()
+        val repository = InMemoryTournamentRepository(InMemoryTournamentDataSource())
         repository.createTournament("Existing Cup").getOrThrow()
         val previousState = repository.state.value
 
@@ -86,7 +89,7 @@ class InMemoryTournamentRepositoryTest {
 
     @Test
     fun addTeamEnforcesNameLengthAfterTrimming() {
-        val repository = InMemoryTournamentRepository()
+        val repository = InMemoryTournamentRepository(InMemoryTournamentDataSource())
         val tournamentId = repository.createTournament("Cup").getOrThrow()
         val longestName = "A".repeat(40)
         val id = repository.addTeam(tournamentId, "  $longestName  ").getOrThrow()
@@ -101,7 +104,7 @@ class InMemoryTournamentRepositoryTest {
 
     @Test
     fun createTournamentPublishesTrimmedTournamentInStateFlow() {
-        val repository: TournamentRepository = InMemoryTournamentRepository()
+        val repository: TournamentRepository = InMemoryTournamentRepository(InMemoryTournamentDataSource())
         val state = repository.state
         assertEquals(AppData(), state.value)
 
@@ -116,7 +119,7 @@ class InMemoryTournamentRepositoryTest {
 
     @Test
     fun creatingAnotherTournamentPreservesPreviousTournamentAndSnapshot() {
-        val repository = InMemoryTournamentRepository()
+        val repository = InMemoryTournamentRepository(InMemoryTournamentDataSource())
         val firstId = repository.createTournament("First Cup").getOrThrow()
         val previousState = repository.state.value
 
@@ -132,7 +135,7 @@ class InMemoryTournamentRepositoryTest {
 
     @Test
     fun blankNamesFailWithoutChangingState() {
-        val repository = InMemoryTournamentRepository()
+        val repository = InMemoryTournamentRepository(InMemoryTournamentDataSource())
         repository.createTournament("Existing Cup").getOrThrow()
         val previousState = repository.state.value
 
@@ -146,7 +149,7 @@ class InMemoryTournamentRepositoryTest {
 
     @Test
     fun nameLengthLimitIsAppliedAfterTrimming() {
-        val repository = InMemoryTournamentRepository()
+        val repository = InMemoryTournamentRepository(InMemoryTournamentDataSource())
         val longestName = "A".repeat(60)
         val id = repository.createTournament("  $longestName  ").getOrThrow()
         val previousState = repository.state.value

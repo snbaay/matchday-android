@@ -1,0 +1,120 @@
+package com.example.matchday.presentation.navigation
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import com.example.matchday.R
+import com.example.matchday.presentation.ui.matches.MatchesScreen
+import com.example.matchday.presentation.ui.matches.ScoreScreen
+import com.example.matchday.presentation.ui.standings.StandingsScreen
+import com.example.matchday.presentation.ui.teams.TeamsScreen
+import com.example.matchday.presentation.ui.tournaments.TournamentDashboardScreen
+import com.example.matchday.presentation.ui.tournaments.TournamentListScreen
+import com.example.matchday.presentation.viewmodel.AppViewModel
+
+@Composable
+fun AppNavGraph(appViewModel: AppViewModel, modifier: Modifier = Modifier) {
+    val navController = rememberNavController()
+    val uiState by appViewModel.uiState.collectAsStateWithLifecycle()
+    val data = uiState.data
+    val onEvent: (NavigationEvent) -> Unit = { event ->
+        when (event) {
+            is NavigationEvent.OpenTournament -> navController.navigate(TournamentRoute(event.tournamentId))
+            is NavigationEvent.OpenTeams -> navController.navigate(TeamsRoute(event.tournamentId))
+            is NavigationEvent.OpenMatches -> navController.navigate(MatchesRoute(event.tournamentId))
+            is NavigationEvent.OpenStandings -> navController.navigate(StandingsRoute(event.tournamentId))
+            is NavigationEvent.OpenScore -> navController.navigate(ScoreRoute(event.matchId))
+            NavigationEvent.Back -> navController.popBackStack()
+        }
+    }
+    val onBack: () -> Unit = { onEvent(NavigationEvent.Back) }
+
+    NavHost(navController, startDestination = TournamentsRoute, modifier = modifier) {
+        composable<TournamentsRoute> {
+            TournamentListScreen(
+                tournaments = data.tournaments,
+                onCreateTournament = appViewModel::createTournament,
+                onOpenTournament = { onEvent(NavigationEvent.OpenTournament(it)) }
+            )
+        }
+        composable<TournamentRoute> { entry ->
+            val id = entry.toRoute<TournamentRoute>().tournamentId
+            val tournament = data.tournaments.find { it.id == id }
+            if (tournament == null) MissingItemScreen(onBack) else {
+                TournamentDashboardScreen(
+                    tournament = tournament,
+                    teamCount = data.teams.count { it.tournamentId == id },
+                    matchCount = data.matches.count { it.tournamentId == id },
+                    onTeams = { onEvent(NavigationEvent.OpenTeams(id)) },
+                    onMatches = { onEvent(NavigationEvent.OpenMatches(id)) },
+                    onStandings = { onEvent(NavigationEvent.OpenStandings(id)) },
+                    onBack = onBack
+                )
+            }
+        }
+        composable<TeamsRoute> { entry ->
+            val id = entry.toRoute<TeamsRoute>().tournamentId
+            val tournament = data.tournaments.find { it.id == id }
+            if (tournament == null) MissingItemScreen(onBack) else TeamsScreen(
+                tournamentName = tournament.name,
+                teams = data.teams.filter { it.tournamentId == id },
+                onAddTeam = { appViewModel.addTeam(id, it) },
+                onBack = onBack
+            )
+        }
+        composable<MatchesRoute> { entry ->
+            val id = entry.toRoute<MatchesRoute>().tournamentId
+            val tournament = data.tournaments.find { it.id == id }
+            if (tournament == null) MissingItemScreen(onBack) else MatchesScreen(
+                tournamentName = tournament.name,
+                teams = data.teams.filter { it.tournamentId == id },
+                matches = data.matches.filter { it.tournamentId == id },
+                onCreateMatch = { home, away -> appViewModel.createMatch(id, home, away) },
+                onOpenScore = { onEvent(NavigationEvent.OpenScore(it)) },
+                onBack = onBack
+            )
+        }
+        composable<ScoreRoute> { entry ->
+            val id = entry.toRoute<ScoreRoute>().matchId
+            val match = data.matches.find { it.id == id }
+            val home = data.teams.find { it.id == match?.homeTeamId }
+            val away = data.teams.find { it.id == match?.awayTeamId }
+            if (match == null || home == null || away == null) MissingItemScreen(onBack) else ScoreScreen(
+                match = match,
+                homeTeamName = home.name,
+                awayTeamName = away.name,
+                onSaveScore = { homeScore, awayScore -> appViewModel.saveScore(id, homeScore, awayScore) },
+                onBack = onBack
+            )
+        }
+        composable<StandingsRoute> { entry ->
+            val id = entry.toRoute<StandingsRoute>().tournamentId
+            val tournament = data.tournaments.find { it.id == id }
+            if (tournament == null) MissingItemScreen(onBack) else StandingsScreen(
+                tournamentName = tournament.name,
+                rows = appViewModel.standingsFor(id),
+                onBack = onBack
+            )
+        }
+    }
+}
+
+@Composable
+private fun MissingItemScreen(onBack: () -> Unit) {
+    Column(Modifier.fillMaxSize().padding(16.dp)) {
+        Text(stringResource(R.string.item_unavailable))
+        Button(onClick = onBack) { Text(stringResource(R.string.back)) }
+    }
+}
