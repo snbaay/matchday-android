@@ -1,6 +1,10 @@
 package com.example.matchday.data
 
-import com.example.matchday.model.Match
+import com.example.matchday.domain.repository.TournamentRepository
+
+import com.example.matchday.data.local.InMemoryTournamentDataSource
+
+import com.example.matchday.domain.model.Match
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -17,7 +21,7 @@ class MatchRepositoryTest {
 
     @Before
     fun setUp() {
-        repository = InMemoryTournamentRepository()
+        repository = InMemoryTournamentRepository(InMemoryTournamentDataSource())
         tournamentId = repository.createTournament("Cup").getOrThrow()
         otherTournamentId = repository.createTournament("Other Cup").getOrThrow()
         homeId = repository.addTeam(tournamentId, "Arsenal").getOrThrow()
