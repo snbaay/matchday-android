@@ -13,7 +13,6 @@ val MatchdayGreenDark = Color(0xFF176B3D)
 val MatchdayText = Color(0xFFE5EDE7)
 val MatchdayTextSecondary = Color(0xFFB9C9BE)
 
-// Keep the generated Theme.kt working until the Material 3 setup in P4-02.
 val Purple80 = MatchdayGreen
 val PurpleGrey80 = MatchdayTextSecondary
 val Pink80 = MatchdayGreen

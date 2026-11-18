@@ -1,42 +1,79 @@
 # MATCHDAY — Local Tournament Manager
 
-Учебное Android-приложение для организации небольших футбольных/FIFA-турниров. Создайте турнир, добавьте команды, запишите результаты матчей и посмотрите автоматически рассчитанную таблицу.
+Учебное Android-приложение для организации небольших футбольных/FIFA-турниров. Позволяет создавать турниры, добавлять команды, расписывать матчи, записывать и редактировать счёт и просматривать автоматически рассчитанную турнирную таблицу.
 
-> **Статус:** проект для Android Group Project (Weeks 12–14). Week 12 — локальная MVP-версия; данные хранятся в памяти процесса и могут потеряться после полного перезапуска. Это не онлайн-сервис.
+> **Ограничение текущей версии:** данные хранятся только в памяти процесса (`InMemoryTournamentDataSource`) и не сохраняются после полного закрытия приложения.
 
 ## Команда
 
-- Участник 1 — **Yessenbay**: архитектура, ViewModel, репозиторий, навигация, интеграция.
-- Участник 2 — **Dulat**: матчи, счёт, таблица результатов.
-- Участник 3 — **Elvina**: команды, добавление команды, общие UI-компоненты.
-- Участник 4 — **Nazerke**: турниры, главный экран, дизайн и темы.
+- **Yessenbay (P1)** — архитектура Clean Architecture, Koin DI, `AppViewModel`, репозиторий, Type-Safe Navigation, интеграция экранов.
+- **Dulat (P2)** — матчи (`MatchRow`, `MatchesScreen`), ввод и редактирование счёта (`ScoreScreen`), расчёт и отображение таблицы (`CalculateStandingsUseCase`, `StandingsScreen`).
+- **Elvina (P3)** — экран команд (`TeamsScreen`, `TeamRow`), переиспользуемые UI-компоненты (`AppTopBar`, `EmptyState`), Compose UI-тесты.
+- **Nazerke (P4)** — список и обзор турниров (`TournamentListScreen`, `TournamentDashboardScreen`, `TournamentCard`), Material 3 тема и цветовая палитра (`Color`, `Type`, `Theme`).
 
-## Возможности Week 12
+## Возможности
 
-1. Создание и просмотр турниров.
-2. Добавление команд в выбранный турнир.
-3. Создание матча между двумя разными командами.
-4. Ввод и обновление результата матча.
-5. Турнирная таблица по завершённым матчам (победа = 3, ничья = 1, поражение = 0).
-6. Несколько экранов с Navigation Compose и аргументами `tournamentId` / `matchId`.
+1. Создание и просмотр списка турниров (валидация пустого имени, 1..60 символов).
+2. Обзор выбранного турнира со счётчиками команд и матчей и быстрым переходом к разделам.
+3. Добавление команд в турнир (1..40 символов, защита от дубликатов без учёта регистра).
+4. Создание матчей между двумя разными командами (запрет на матч команды с самой собой и на повтор пары в рамках одного турнира).
+5. Ввод и редактирование счёта матча (целые числа `0..99`, безопасная обработка некорректного ввода).
+6. Автоматический пересчёт турнирной таблицы с нуля по завершённым матчам:
+   - очки: победа = `3`, ничья = `1`, поражение = `0`;
+   - сортировка: очки ↓ → разница мячей ↓ → забитые голы ↓ → название команды ↑;
+   - незавершённые матчи (`null`) не учитываются; команды с 0 матчей отображаются с нулями; редактирование счёта (например, `3:1 → 0:0`) не приводит к двойному подсчёту.
+
+## Архитектура (Clean Architecture + MVVM)
+
+```text
+MainActivity → Koin (AppModules) → AppViewModel (StateFlow<AppUiState>)
+                                        ↓
+                          Domain Use Cases & Models
+             (Observe/Create/Add/Save, CalculateStandingsUseCase)
+                                        ↓
+                        TournamentRepository (domain interface)
+                                        ↑
+                     InMemoryTournamentRepository (data)
+                                        ↓
+                   InMemoryTournamentDataSource → DTO → Mappers
+
+AppNavGraph (@Serializable Routes + NavigationEvent) → presentation/ui screens
+```
+
+### Основные пакеты (`app/src/main/java/com/example/matchday/`)
+
+- **`domain/`**
+  - `model/` — чистые модели (`Tournament`, `Team`, `Match`, `StandingRow`, `AppData`, `TournamentFailure`).
+  - `repository/` — интерфейс `TournamentRepository`.
+  - `usecase/` — бизнес-операции (`TournamentUseCases.kt`, `StandingsCalculator.kt` с `CalculateStandingsUseCase`).
+- **`data/`**
+  - `InMemoryTournamentRepository.kt` — реализация `TournamentRepository` со `StateFlow<AppData>`.
+  - `local/` — источник данных в памяти (`InMemoryTournamentDataSource`), `TournamentSnapshotDto` и мапперы `TournamentMappers`.
+- **`di/`**
+  - `AppModules.kt` (`dataModule`, `domainModule`, `presentationModule`) и `MatchdayApplication.kt` — сборка зависимостей через **Koin**.
+- **`presentation/`**
+  - `navigation/` — 6 типобезопасных `@Serializable`-маршрутов (`TournamentsRoute`, `TournamentRoute`, `TeamsRoute`, `MatchesRoute`, `StandingsRoute`, `ScoreRoute`), `NavigationEvent` и `AppNavGraph`.
+  - `viewmodel/` — единый `AppViewModel` и неизменяемый `AppUiState`.
+  - `ui/` — stateless Compose-экраны (`tournaments/`, `teams/`, `matches/`, `standings/`), общие компоненты (`components/`, `ErrorText.kt`) и единая тёмная тема (`theme/`).
+- **`res/values/strings.xml`** — пользовательские тексты и сообщения об ошибках.
 
 ## Технологии
 
 - Kotlin
 - Jetpack Compose + Material 3
-- AndroidX ViewModel
-- StateFlow и `collectAsStateWithLifecycle`
-- Navigation Compose
-- In-memory repository (на Week 12)
+- Clean Architecture (Domain / Data / Presentation) + MVVM
+- Koin (`koin-android`)
+- Type-Safe Navigation Compose (`2.10.2`, `@Serializable` + `kotlin-serialization`)
+- `StateFlow` и `collectAsStateWithLifecycle`
+- JUnit 4 и Compose UI Testing
 
-## Запуск
+## Запуск и проверка
 
 1. Откройте проект в Android Studio.
-2. Дождитесь Gradle Sync.
-3. Выберите Android Emulator или реальное Android-устройство.
-4. Запустите конфигурацию `app`.
+2. Дождитесь завершения Gradle Sync.
+3. Выберите Android Emulator или реальное устройство и запустите конфигурацию `app`.
 
-Проверка в терминале (Windows / PowerShell):
+Проверка сборки и тестов из терминала (Windows / PowerShell):
 
 ```powershell
 .\gradlew.bat :app:assembleDebug
@@ -44,15 +81,3 @@
 ```
 
 На macOS/Linux используйте `./gradlew`.
-
-## Документация команды
-
-Начните с [START_HERE.md](START_HERE.md). Спецификация в `docs/01_SCOPE.md`, архитектура в `docs/02_ARCHITECTURE.md`, интерфейсы в `docs/03_CONTRACTS.md`, распределение работы в `docs/04_TEAM_TASKS.md`, Git/Codex в `docs/05_GIT_CODEX_WORKFLOW.md`.
-
-## Ограничения и дорожная карта
-
-Week 13 и Week 14 развиваются из этой же кодовой базы. Предположения о будущих возможностях (например, Room и playoff) описаны в `docs/08_ROADMAP.md`; они **не являются утверждёнными требованиями преподавателя**.
-
-## Использование ИИ
-
-Команда может использовать Codex как помощника в реализации и ревью. Автор каждого PR отвечает за понимание, тестирование и проверку своего кода. Следуйте правилам курса по раскрытию использования ИИ, когда они будут уточнены.

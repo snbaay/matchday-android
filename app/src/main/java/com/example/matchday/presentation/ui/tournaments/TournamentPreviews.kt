@@ -12,7 +12,6 @@ import androidx.compose.ui.unit.dp
 import com.example.matchday.domain.model.Tournament
 import com.example.matchday.presentation.ui.theme.MatchdayTheme
 
-// Sample data belongs only to previews; real screens receive data from P1.
 @Preview(name = "Card - long name", widthDp = 360, heightDp = 800)
 @Preview(name = "Card - large font", widthDp = 360, heightDp = 800, fontScale = 1.5f)
 @Composable
