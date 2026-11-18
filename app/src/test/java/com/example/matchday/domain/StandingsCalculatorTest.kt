@@ -7,6 +7,8 @@ import org.junit.Test
 
 class StandingsCalculatorTest {
 
+    private val calculateStandingsUseCase = CalculateStandingsUseCase()
+
     @Test
     fun calculate_awardsThreePointsForWinAndZeroForLoss() {
         val teams = listOf(
@@ -24,7 +26,8 @@ class StandingsCalculatorTest {
             )
         )
 
-        val rows = StandingsCalculator.calculate(teams, matches)
+        val rows = calculateStandingsUseCase(teams, matches)
+        assertEquals(rows, StandingsCalculator.calculate(teams, matches))
 
         assertEquals(2, rows.size)
         val winner = rows[0]
@@ -67,7 +70,8 @@ class StandingsCalculatorTest {
             )
         )
 
-        val rows = StandingsCalculator.calculate(teams, matches)
+        val rows = calculateStandingsUseCase(teams, matches)
+        assertEquals(rows, StandingsCalculator.calculate(teams, matches))
 
         assertEquals(2, rows.size)
         assertEquals(listOf("Arsenal", "Liverpool"), rows.map { it.teamName })
@@ -152,7 +156,8 @@ class StandingsCalculatorTest {
             )
         )
 
-        val rows = StandingsCalculator.calculate(teams, matches)
+        val rows = calculateStandingsUseCase(teams, matches)
+        assertEquals(rows, StandingsCalculator.calculate(teams, matches))
 
         assertEquals(listOf("Arsenal", "Chelsea", "Liverpool"), rows.map { it.teamName })
 
@@ -187,7 +192,6 @@ class StandingsCalculatorTest {
         val beta = Team(id = "t_beta", tournamentId = "tour1", name = "Beta")
         val omega = Team(id = "t_omega", tournamentId = "tour1", name = "Omega")
 
-        // Shuffled order to verify sorting does not depend on input order.
         val teams = listOf(omega, beta, alpha, gamma, delta, zeta)
         val matches = listOf(
             Match("m1", "tour1", zeta.id, omega.id, homeScore = 1, awayScore = 0),
@@ -198,7 +202,8 @@ class StandingsCalculatorTest {
             Match("m6", "tour1", beta.id, omega.id, homeScore = 2, awayScore = 1)
         )
 
-        val rows = StandingsCalculator.calculate(teams, matches)
+        val rows = calculateStandingsUseCase(teams, matches)
+        assertEquals(rows, StandingsCalculator.calculate(teams, matches))
 
         assertEquals(
             listOf("Zeta", "Delta", "Gamma", "Alpha", "Beta", "Omega"),

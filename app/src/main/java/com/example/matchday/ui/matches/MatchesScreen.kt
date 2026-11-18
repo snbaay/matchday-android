@@ -4,14 +4,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -40,9 +39,6 @@ import com.example.matchday.model.Match
 import com.example.matchday.model.Team
 import com.example.matchday.ui.theme.MatchdayTheme
 
-/**
- * Displays the matches screen with a top bar, Back button, and scrollable match list.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MatchesScreen(
@@ -161,7 +157,6 @@ fun MatchesScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CreateMatchDialog(
     teams: List<Team>,
@@ -169,32 +164,13 @@ private fun CreateMatchDialog(
     onCreateMatch: (String, String) -> Result<String>,
     onCreated: () -> Unit
 ) {
-    BasicAlertDialog(onDismissRequest = onDismiss) {
-        CreateMatchDialogCard(
-            teams = teams,
-            onDismiss = onDismiss,
-            onCreateMatch = onCreateMatch,
-            onCreated = onCreated
-        )
-    }
-}
-
-@Composable
-private fun CreateMatchDialogCard(
-    teams: List<Team>,
-    onDismiss: () -> Unit,
-    onCreateMatch: (String, String) -> Result<String>,
-    onCreated: () -> Unit,
-    modifier: Modifier = Modifier,
-    initialErrorMessage: String? = null
-) {
     var homeTeamId by rememberSaveable(teams) {
         mutableStateOf(teams.firstOrNull()?.id.orEmpty())
     }
     var awayTeamId by rememberSaveable(teams) {
         mutableStateOf(teams.getOrNull(1)?.id ?: teams.firstOrNull()?.id.orEmpty())
     }
-    var errorMessage by rememberSaveable { mutableStateOf(initialErrorMessage) }
+    var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
     val isSameTeam = homeTeamId.isNotEmpty() && homeTeamId == awayTeamId
     val displayedError = if (isSameTeam) {
@@ -203,73 +179,62 @@ private fun CreateMatchDialogCard(
         errorMessage
     }
 
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface,
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        tonalElevation = 6.dp
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
             Text(
                 text = "Create Match",
                 style = MaterialTheme.typography.titleLarge
             )
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                TeamSelectorField(
+                    label = "Home team",
+                    teams = teams,
+                    selectedTeamId = homeTeamId,
+                    onSelectTeam = {
+                        homeTeamId = it
+                        errorMessage = null
+                    }
+                )
 
-            TeamSelectorField(
-                label = "Home team",
-                teams = teams,
-                selectedTeamId = homeTeamId,
-                onSelectTeam = {
-                    homeTeamId = it
-                    errorMessage = null
-                }
-            )
+                TeamSelectorField(
+                    label = "Away team",
+                    teams = teams,
+                    selectedTeamId = awayTeamId,
+                    onSelectTeam = {
+                        awayTeamId = it
+                        errorMessage = null
+                    }
+                )
 
-            TeamSelectorField(
-                label = "Away team",
-                teams = teams,
-                selectedTeamId = awayTeamId,
-                onSelectTeam = {
-                    awayTeamId = it
-                    errorMessage = null
-                }
-            )
-
-            if (displayedError != null) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer
-                ) {
-                    Text(
-                        text = displayedError,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(12.dp)
-                    )
+                if (displayedError != null) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    ) {
+                        Text(
+                            text = displayedError,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(12.dp)
+                        )
+                    }
                 }
             }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
-            ) {
-                TextButton(onClick = onDismiss) {
-                    Text("Cancel")
-                }
-                Button(
-                    enabled = !isSameTeam && homeTeamId.isNotBlank() && awayTeamId.isNotBlank(),
-                    onClick = {
-                        if (homeTeamId == awayTeamId) {
-                            errorMessage = "Home and away teams must be different."
-                            return@Button
-                        }
+        },
+        confirmButton = {
+            Button(
+                enabled = !isSameTeam && homeTeamId.isNotBlank() && awayTeamId.isNotBlank(),
+                onClick = {
+                    if (homeTeamId == awayTeamId) {
+                        errorMessage = "Home and away teams must be different."
+                    } else {
                         val result = onCreateMatch(homeTeamId, awayTeamId)
                         if (result.isSuccess) {
                             errorMessage = null
@@ -279,12 +244,17 @@ private fun CreateMatchDialogCard(
                                 ?: "Cannot create match"
                         }
                     }
-                ) {
-                    Text("Create")
                 }
+            ) {
+                Text("Create")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
             }
         }
-    }
+    )
 }
 
 @Composable
@@ -433,57 +403,5 @@ private fun MatchesScreenEmptyOneTeamPreview() {
             onOpenScore = {},
             onBack = {}
         )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun CreateMatchDialogPreview() {
-    val previewTeams = listOf(
-        Team(id = "t1", tournamentId = "tour1", name = "Real Madrid"),
-        Team(id = "t2", tournamentId = "tour1", name = "Barcelona"),
-        Team(id = "t3", tournamentId = "tour1", name = "Arsenal")
-    )
-
-    MatchdayTheme {
-        Surface(
-            color = MaterialTheme.colorScheme.background
-        ) {
-            Box(modifier = Modifier.padding(16.dp)) {
-                CreateMatchDialogCard(
-                    teams = previewTeams,
-                    onDismiss = {},
-                    onCreateMatch = { _, _ -> Result.success("m1") },
-                    onCreated = {}
-                )
-            }
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun CreateMatchDialogValidationPreview() {
-    val previewTeams = listOf(
-        Team(id = "t1", tournamentId = "tour1", name = "Real Madrid"),
-        Team(id = "t2", tournamentId = "tour1", name = "Barcelona")
-    )
-
-    MatchdayTheme {
-        Surface(
-            color = MaterialTheme.colorScheme.background
-        ) {
-            Box(modifier = Modifier.padding(16.dp)) {
-                CreateMatchDialogCard(
-                    teams = previewTeams,
-                    onDismiss = {},
-                    onCreateMatch = { _, _ ->
-                        Result.failure(IllegalArgumentException("These teams already have a match."))
-                    },
-                    onCreated = {},
-                    initialErrorMessage = "These teams already have a match."
-                )
-            }
-        }
     }
 }

@@ -22,9 +22,6 @@ import androidx.compose.ui.unit.dp
 import com.example.matchday.model.Match
 import com.example.matchday.ui.theme.MatchdayTheme
 
-/**
- * Displays a single match card with team names, score, and planned/finished status.
- */
 @Composable
 fun MatchRow(
     match: Match,
@@ -33,10 +30,8 @@ fun MatchRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val homeScore = match.homeScore
-    val awayScore = match.awayScore
-    val isFinished = homeScore != null && awayScore != null
-    val scoreText = if (isFinished) "$homeScore - $awayScore" else "- : -"
+    val isFinished = match.homeScore != null && match.awayScore != null
+    val scoreText = if (isFinished) "${match.homeScore} - ${match.awayScore}" else "- : -"
     val statusText = if (isFinished) "Finished" else "Planned"
     val actionHint = if (isFinished) "Tap to edit score" else "Tap to enter score"
 
