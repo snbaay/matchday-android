@@ -1,5 +1,7 @@
 # CONTRIBUTING.md — MATCHDAY repository instructions
 
+For the coordinated Clean Architecture refactor, read `docs/09_CLEAN_ARCHITECTURE.md` alongside the original Week 12 documents. The earlier package diagrams and string route examples are historical; `docs/09_CLEAN_ARCHITECTURE.md` describes the current code. P1, P2, P3 and P4 ownership still applies to their corresponding paths under `presentation/` and `domain/`.
+
 Read this file **before any code change**. The project is a beginner-friendly Android Week 12 group assignment. Keep implementations small, explainable, buildable, and within the user's assigned ownership.
 
 ## Mandatory source documents
