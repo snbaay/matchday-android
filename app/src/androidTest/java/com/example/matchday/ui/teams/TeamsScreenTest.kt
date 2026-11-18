@@ -1,6 +1,7 @@
 package com.example.matchday.ui.teams
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertTextEquals
@@ -10,6 +11,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
@@ -24,6 +26,28 @@ import org.junit.runner.RunWith
 class TeamsScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun titleIsShownOnceAndBackCallsCallbackOnce() {
+        var backCalls = 0
+
+        composeRule.setContent {
+            MaterialTheme {
+                TeamsScreen(
+                    tournamentName = "SDU FIFA Cup",
+                    teams = emptyList(),
+                    onAddTeam = { Result.success("team-id") },
+                    onBack = { backCalls++ }
+                )
+            }
+        }
+
+        composeRule.onAllNodesWithText("SDU FIFA Cup").assertCountEquals(1)
+        composeRule.onNodeWithText("SDU FIFA Cup").assertIsDisplayed()
+        composeRule.runOnIdle { assertEquals(0, backCalls) }
+        composeRule.onNodeWithText("Back").performClick()
+        composeRule.runOnIdle { assertEquals(1, backCalls) }
+    }
 
     @Test
     fun emptyTeamsShowsInstructionAndAllowsOpeningAddDialog() {
