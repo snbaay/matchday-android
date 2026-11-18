@@ -38,7 +38,6 @@ private val DarkColorScheme = darkColorScheme(
     surfaceContainerHighest = MatchdaySurfaceVariant
 )
 
-// One fixed dark theme keeps all screens consistent on every device.
 @Composable
 fun MatchdayTheme(content: @Composable () -> Unit) {
     MaterialTheme(
