@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.matchday.model.Team
+import com.example.matchday.ui.components.EmptyState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,8 +67,14 @@ fun TeamsScreen(
                     Text("Add Team")
                 }
             }
-            items(teams, key = { team -> team.id }) { team ->
-                TeamRow(team = team)
+            if (teams.isEmpty()) {
+                item {
+                    EmptyState(message = "No teams yet\nTap Add Team to add your first team.")
+                }
+            } else {
+                items(teams, key = { team -> team.id }) { team ->
+                    TeamRow(team = team)
+                }
             }
         }
     }

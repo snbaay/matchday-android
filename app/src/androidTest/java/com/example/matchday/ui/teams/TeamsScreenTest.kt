@@ -2,6 +2,7 @@ package com.example.matchday.ui.teams
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasSetTextAction
@@ -23,6 +24,51 @@ import org.junit.runner.RunWith
 class TeamsScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun emptyTeamsShowsInstructionAndAllowsOpeningAddDialog() {
+        composeRule.setContent {
+            MaterialTheme {
+                TeamsScreen(
+                    tournamentName = "Cup",
+                    teams = emptyList(),
+                    onAddTeam = { Result.success("team-id") },
+                    onBack = {}
+                )
+            }
+        }
+
+        composeRule.onNodeWithText(
+            "No teams yet\nTap Add Team to add your first team."
+        ).assertIsDisplayed()
+        composeRule.onNodeWithText("Add Team")
+            .assertIsDisplayed()
+            .assertIsEnabled()
+            .performClick()
+        composeRule.onNode(isDialog()).assertIsDisplayed()
+    }
+
+    @Test
+    fun nonEmptyTeamsShowsTeamNamesWithoutEmptyState() {
+        composeRule.setContent {
+            MaterialTheme {
+                TeamsScreen(
+                    tournamentName = "Cup",
+                    teams = listOf(
+                        Team("arsenal-id", "cup-id", "Arsenal"),
+                        Team("chelsea-id", "cup-id", "Chelsea")
+                    ),
+                    onAddTeam = { Result.success("team-id") },
+                    onBack = {}
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Arsenal").assertIsDisplayed()
+        composeRule.onNodeWithText("Chelsea").assertIsDisplayed()
+        composeRule.onNodeWithText("No teams yet", substring = true).assertDoesNotExist()
+        composeRule.onNodeWithText("Add Team").assertIsDisplayed().assertIsEnabled()
+    }
 
     @Test
     fun duplicateErrorPreservesNameAndAllowsRetryAfterEditing() {
