@@ -7,6 +7,7 @@ import java.util.Locale
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 internal class RemoteClubSearchRepository(
     private val api: ClubSearchApi
@@ -22,27 +23,28 @@ internal class RemoteClubSearchRepository(
         }
 
         return clubs
-            .mapNotNull { club ->
-                val rank = listOfNotNull(club.teamName, club.shortName)
+            .groupBy(ClubDto::teamId)
+            .values
+            .mapNotNull { clubEntries ->
+                val rank = clubEntries.asSequence()
+                    .flatMap { sequenceOf(it.teamName, it.shortName).filterNotNull() }
                     .mapNotNull { matchRank(normalizeClubName(it), name) }
                     .minOrNull() ?: return@mapNotNull null
-                rank to club
+                val primary = clubEntries.first()
+                val badgeUrl = clubEntries.firstNotNullOfOrNull { entry ->
+                    entry.teamIconUrl?.trim()?.toHttpUrlOrNull()
+                        ?.takeIf { it.isHttps }
+                        ?.toString()
+                }
+
+                rank to Club(primary.teamId.toString(), primary.teamName, badgeUrl)
             }
             .sortedWith(
-                compareBy<Pair<Int, ClubDto>> { (rank, _) -> rank }
-                    .thenBy(String.CASE_INSENSITIVE_ORDER) { (_, club) -> club.teamName }
-                    .thenBy { (_, club) -> club.teamId }
+                compareBy<Pair<Int, Club>> { (rank, _) -> rank }
+                    .thenBy(String.CASE_INSENSITIVE_ORDER) { (_, club) -> club.name }
+                    .thenBy { (_, club) -> club.id }
             )
-            .distinctBy { (_, club) -> club.teamId }
-            .map { (_, club) ->
-                Club(
-                    id = club.teamId.toString(),
-                    name = club.teamName,
-                    badgeUrl = club.teamIconUrl?.trim()?.takeIf {
-                        it.startsWith("https://", ignoreCase = true)
-                    }
-                )
-            }
+            .map { (_, club) -> club }
     }
 }
 

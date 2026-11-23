@@ -59,6 +59,20 @@ class RemoteClubSearchRepositoryTest {
     }
 
     @Test
+    fun combinesAliasesAndHttpsBadgeFromDifferentCatalogsForOneProviderId() = runBlocking {
+        val primary = ClubDto(22, "Canonical United", teamIconUrl = "https://")
+        val alternate = ClubDto(22, "Alternative United", "AU", "https://example.com/crest.svg")
+        val repository = RemoteClubSearchRepository(object : ClubSearchApi {
+            override suspend fun listClubs(league: String, season: Int): List<ClubDto> =
+                if (league == "pl") listOf(primary) else listOf(alternate)
+        })
+
+        val expected = listOf(Club("22", "Canonical United", "https://example.com/crest.svg"))
+        assertEquals(expected, repository.search("alternative"))
+        assertEquals(expected, repository.search("canonical"))
+    }
+
+    @Test
     fun blankSearchSkipsNetworkAndRequestFailureReachesCaller() = runBlocking {
         val repository = RemoteClubSearchRepository(object : ClubSearchApi {
             override suspend fun listClubs(league: String, season: Int): List<ClubDto> =
