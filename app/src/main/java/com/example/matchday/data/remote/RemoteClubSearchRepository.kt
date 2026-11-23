@@ -1,13 +1,18 @@
 package com.example.matchday.data.remote
 
 import com.example.matchday.domain.model.Club
+import com.example.matchday.domain.model.ClubSearchException
 import com.example.matchday.domain.repository.ClubSearchRepository
+import java.io.IOException
+import java.net.SocketTimeoutException
 import java.text.Normalizer
 import java.util.Locale
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.serialization.SerializationException
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import retrofit2.HttpException
 
 internal class RemoteClubSearchRepository(
     private val api: ClubSearchApi
@@ -16,13 +21,7 @@ internal class RemoteClubSearchRepository(
         val name = normalizeClubName(query)
         if (name.isEmpty()) return emptyList()
 
-        val clubs = coroutineScope {
-            catalogSeasons.map { (league, season) ->
-                async { api.listClubs(league, season) }
-            }.awaitAll().flatten()
-        }
-
-        return clubs
+        return loadCatalogs()
             .groupBy(ClubDto::teamId)
             .values
             .mapNotNull { clubEntries ->
@@ -45,6 +44,21 @@ internal class RemoteClubSearchRepository(
                     .thenBy { (_, club) -> club.id }
             )
             .map { (_, club) -> club }
+    }
+    private suspend fun loadCatalogs(): List<ClubDto> = try {
+        coroutineScope {
+            catalogSeasons.map { (league, season) ->
+                async { api.listClubs(league, season) }
+            }.awaitAll().flatten()
+        }
+    } catch (error: HttpException) {
+        throw ClubSearchException.Http(error.code(), error)
+    } catch (error: SerializationException) {
+        throw ClubSearchException.InvalidResponse(error)
+    } catch (error: SocketTimeoutException) {
+        throw ClubSearchException.Timeout(error)
+    } catch (error: IOException) {
+        throw ClubSearchException.Network(error)
     }
 }
 

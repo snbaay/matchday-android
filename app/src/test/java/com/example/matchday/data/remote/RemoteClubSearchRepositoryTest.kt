@@ -1,11 +1,18 @@
 package com.example.matchday.data.remote
 
 import com.example.matchday.domain.model.Club
+import com.example.matchday.domain.model.ClubSearchException
 import java.io.IOException
+import java.net.SocketTimeoutException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.SerializationException
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import retrofit2.HttpException
+import retrofit2.Response
 
 class RemoteClubSearchRepositoryTest {
     @Test
@@ -73,15 +80,43 @@ class RemoteClubSearchRepositoryTest {
     }
 
     @Test
-    fun blankSearchSkipsNetworkAndRequestFailureReachesCaller() = runBlocking {
-        val repository = RemoteClubSearchRepository(object : ClubSearchApi {
-            override suspend fun listClubs(league: String, season: Int): List<ClubDto> =
-                throw IOException("Offline")
-        })
+    fun blankSearchSkipsNetworkAndIOExceptionBecomesNetworkFailure() = runBlocking {
+        val repository = failingRepository { IOException("Offline") }
 
         assertEquals(emptyList<Club>(), repository.search("  / -  "))
         val failure = runCatching { repository.search("Example") }.exceptionOrNull()
-        assertTrue(failure is IOException)
-        assertEquals("Offline", failure?.message)
+        assertTrue(failure is ClubSearchException.Network)
+        assertEquals("Offline", failure?.cause?.message)
     }
+
+    @Test
+    fun retainsTimeoutHttpAndDecodingFailures() = runBlocking {
+        val timeout = failingRepository { SocketTimeoutException("Timed out") }
+        val invalidJson = failingRepository { SerializationException("Invalid JSON") }
+        val unavailable = failingRepository {
+            HttpException(Response.error<ClubDto>(503, "".toResponseBody()))
+        }
+
+        assertTrue(
+            runCatching { timeout.search("Club") }.exceptionOrNull() is ClubSearchException.Timeout
+        )
+        assertTrue(
+            runCatching { invalidJson.search("Club") }.exceptionOrNull() is ClubSearchException.InvalidResponse
+        )
+        val failure = runCatching { unavailable.search("Club") }.exceptionOrNull()
+        assertEquals(503, (failure as? ClubSearchException.Http)?.statusCode)
+    }
+
+    @Test
+    fun leavesCoroutineCancellationIntact() = runBlocking {
+        val cancelled = failingRepository { CancellationException("Search superseded") }
+
+        assertTrue(runCatching { cancelled.search("Club") }.exceptionOrNull() is CancellationException)
+    }
+
+    private fun failingRepository(failure: () -> Exception) =
+        RemoteClubSearchRepository(object : ClubSearchApi {
+            override suspend fun listClubs(league: String, season: Int): List<ClubDto> =
+                throw failure()
+        })
 }
