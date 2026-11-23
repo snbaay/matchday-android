@@ -7,6 +7,8 @@ import java.net.SocketTimeoutException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerializationException
+import okhttp3.Protocol
+import okhttp3.Request
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -112,6 +114,33 @@ class RemoteClubSearchRepositoryTest {
         val cancelled = failingRepository { CancellationException("Search superseded") }
 
         assertTrue(runCatching { cancelled.search("Club") }.exceptionOrNull() is CancellationException)
+    }
+
+    @Test
+    fun readsRetryAfterFromRateLimitedResponses() = runBlocking {
+        val examples = mapOf(
+            "45" to 45L,
+            "Sun, 06 Nov 1994 08:49:37 GMT" to 0L,
+            "-5" to null,
+            "invalid" to null
+        )
+        examples.forEach { (header, seconds) ->
+            val repository = failingRepository { rateLimitResponse(header) }
+            val failure = runCatching { repository.search("Club") }.exceptionOrNull()
+            assertTrue(failure is ClubSearchException.RateLimited)
+            assertEquals(seconds, (failure as? ClubSearchException.RateLimited)?.retryAfterSeconds)
+        }
+    }
+
+    private fun rateLimitResponse(retryAfter: String): HttpException {
+        val response = okhttp3.Response.Builder()
+            .request(Request.Builder().url("https://api.openligadb.de/").build())
+            .protocol(Protocol.HTTP_1_1)
+            .code(429)
+            .message("Too Many Requests")
+            .header("Retry-After", retryAfter)
+            .build()
+        return HttpException(Response.error<ClubDto>("".toResponseBody(), response))
     }
 
     private fun failingRepository(failure: () -> Exception) =

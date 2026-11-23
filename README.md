@@ -73,7 +73,7 @@ AppNavGraph (@Serializable Routes + NavigationEvent) → presentation/ui screens
 
 Для проверки ответа API откройте [каталог Лиги чемпионов](https://api.openligadb.de/getavailableteams/ucl/2025) и найдите `FK Kairat`. Поля `teamId`, `teamName` и `teamIconUrl` преобразуются в `Club(id, name, badgeUrl)`. У клуба может отсутствовать HTTPS-ссылка на эмблему.
 
-ViewModel может получить `SearchClubsUseCase` через Koin. Вызов `searchClubs(query)` выполняется из корутины. Пустой список означает, что совпадений нет. Ошибки запроса передаются вызывающему коду, чтобы экран мог показать ошибку и повторить запрос.
+ViewModel может получить `SearchClubsUseCase` через Koin. Вызов `searchClubs(query)` выполняется из корутины. Пустой список означает, что совпадений нет. Сетевые ошибки передаются как `ClubSearchException`. Ошибка `RateLimited` включает `retryAfterSeconds`, если сервис прислал допустимый `Retry-After`.
 
 Данные предоставлены [OpenLigaDB по лицензии ODbL 1.0](https://www.openligadb.de/en/license).
 
