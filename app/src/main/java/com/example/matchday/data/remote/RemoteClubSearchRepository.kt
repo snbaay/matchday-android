@@ -6,11 +6,6 @@ import com.example.matchday.domain.repository.ClubSearchRepository
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.text.Normalizer
-import java.time.Duration
-import java.time.Instant
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 import java.util.Locale
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -30,10 +25,11 @@ internal class RemoteClubSearchRepository(
             .groupBy(ClubDto::teamId)
             .values
             .mapNotNull { clubEntries ->
-                val rank = clubEntries.asSequence()
-                    .flatMap { sequenceOf(it.teamName, it.shortName).filterNotNull() }
-                    .mapNotNull { matchRank(normalizeClubName(it), name) }
-                    .minOrNull() ?: return@mapNotNull null
+                val matches = clubEntries.any { entry ->
+                    normalizeClubName(entry.teamName).contains(name) ||
+                        entry.shortName?.let(::normalizeClubName)?.contains(name) == true
+                }
+                if (!matches) return@mapNotNull null
                 val primary = clubEntries.first()
                 val badgeUrl = clubEntries.firstNotNullOfOrNull { entry ->
                     entry.teamIconUrl?.trim()?.toHttpUrlOrNull()
@@ -41,14 +37,9 @@ internal class RemoteClubSearchRepository(
                         ?.toString()
                 }
 
-                rank to Club(primary.teamId.toString(), primary.teamName, badgeUrl)
+                Club(primary.teamId.toString(), primary.teamName, badgeUrl)
             }
-            .sortedWith(
-                compareBy<Pair<Int, Club>> { (rank, _) -> rank }
-                    .thenBy(String.CASE_INSENSITIVE_ORDER) { (_, club) -> club.name }
-                    .thenBy { (_, club) -> club.id }
-            )
-            .map { (_, club) -> club }
+            .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER, Club::name).thenBy(Club::id))
     }
 
     private suspend fun loadCatalogs(): List<ClubDto> = try {
@@ -58,10 +49,6 @@ internal class RemoteClubSearchRepository(
             }.awaitAll().flatten()
         }
     } catch (error: HttpException) {
-        if (error.code() == 429) {
-            val delay = error.response()?.headers()?.get("Retry-After")?.let(::parseRetryAfter)
-            throw ClubSearchException.RateLimited(delay, error)
-        }
         throw ClubSearchException.Http(error.code(), error)
     } catch (error: SerializationException) {
         throw ClubSearchException.InvalidResponse(error)
@@ -87,23 +74,3 @@ private fun normalizeClubName(value: String): String =
         .replace(combiningMarks, "")
         .replace(nameSeparators, " ")
         .trim()
-
-private fun matchRank(name: String, query: String): Int? = when {
-    name == query -> 0
-    name.startsWith(query) || name.contains(" $query") -> 1
-    name.contains(query) -> 2
-    else -> null
-}
-
-private fun parseRetryAfter(header: String): Long? {
-    val value = header.trim()
-    value.toLongOrNull()?.let { return it.takeIf { seconds -> seconds >= 0 } }
-
-    return try {
-        val retryAt = ZonedDateTime.parse(value, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant()
-        val delay = Duration.between(Instant.now(), retryAt)
-        (delay.seconds + if (delay.nano > 0) 1 else 0).coerceAtLeast(0)
-    } catch (_: DateTimeParseException) {
-        null
-    }
-}
