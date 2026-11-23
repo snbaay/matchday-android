@@ -48,7 +48,12 @@ internal class RemoteClubSearchRepository(
     }
 }
 
-private val catalogSeasons = mapOf("pl" to 2026, "bl1" to 2026, "ucl" to 2025)
+private val catalogSeasons = mapOf(
+    "pl" to 2026,
+    "bl1" to 2026,
+    "ucl" to 2025,
+    "uel2026" to 2026
+)
 
 private val combiningMarks = Regex("\\p{M}+")
 private val nameSeparators = Regex("[^\\p{L}\\p{N}]+")
