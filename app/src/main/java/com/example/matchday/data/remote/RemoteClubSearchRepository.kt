@@ -2,6 +2,8 @@ package com.example.matchday.data.remote
 
 import com.example.matchday.domain.model.Club
 import com.example.matchday.domain.repository.ClubSearchRepository
+import java.text.Normalizer
+import java.util.Locale
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -10,7 +12,7 @@ internal class RemoteClubSearchRepository(
     private val api: ClubSearchApi
 ) : ClubSearchRepository {
     override suspend fun search(query: String): List<Club> {
-        val name = query.trim()
+        val name = normalizeClubName(query)
         if (name.isEmpty()) return emptyList()
 
         val clubs = coroutineScope {
@@ -21,8 +23,8 @@ internal class RemoteClubSearchRepository(
 
         return clubs
             .filter { club ->
-                club.teamName.contains(name, ignoreCase = true) ||
-                    club.shortName?.contains(name, ignoreCase = true) == true
+                normalizeClubName(club.teamName).contains(name) ||
+                    club.shortName?.let(::normalizeClubName)?.contains(name) == true
             }
             .distinctBy(ClubDto::teamId)
             .map { club ->
@@ -39,3 +41,12 @@ internal class RemoteClubSearchRepository(
 }
 
 private val catalogSeasons = mapOf("pl" to 2026, "bl1" to 2026, "ucl" to 2025)
+
+private val combiningMarks = Regex("\\p{M}+")
+private val nameSeparators = Regex("[^\\p{L}\\p{N}]+")
+
+private fun normalizeClubName(value: String): String =
+    Normalizer.normalize(value.lowercase(Locale.ROOT), Normalizer.Form.NFKD)
+        .replace(combiningMarks, "")
+        .replace(nameSeparators, " ")
+        .trim()

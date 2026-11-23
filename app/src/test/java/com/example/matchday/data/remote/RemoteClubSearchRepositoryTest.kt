@@ -26,13 +26,32 @@ class RemoteClubSearchRepositoryTest {
     }
 
     @Test
+    fun searchesWithoutAccentsAndTreatsPunctuationAsWordSeparators() = runBlocking {
+        val bayern = ClubDto(40, "FC Bayern München")
+        val saintGermain = ClubDto(4363, "Paris Saint-Germain")
+        val repository = RemoteClubSearchRepository(object : ClubSearchApi {
+            override suspend fun listClubs(league: String, season: Int): List<ClubDto> =
+                listOf(bayern, saintGermain)
+        })
+
+        assertEquals(
+            listOf(Club("40", "FC Bayern München", null)),
+            repository.search("  BAYERN  munchen  ")
+        )
+        assertEquals(
+            listOf(Club("4363", "Paris Saint-Germain", null)),
+            repository.search("paris saint / germain")
+        )
+    }
+
+    @Test
     fun blankSearchSkipsNetworkAndRequestFailureReachesCaller() = runBlocking {
         val repository = RemoteClubSearchRepository(object : ClubSearchApi {
             override suspend fun listClubs(league: String, season: Int): List<ClubDto> =
                 throw IOException("Offline")
         })
 
-        assertEquals(emptyList<Club>(), repository.search("  "))
+        assertEquals(emptyList<Club>(), repository.search("  / -  "))
         val failure = runCatching { repository.search("Example") }.exceptionOrNull()
         assertTrue(failure is IOException)
         assertEquals("Offline", failure?.message)
