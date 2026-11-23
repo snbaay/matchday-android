@@ -45,6 +45,20 @@ class RemoteClubSearchRepositoryTest {
     }
 
     @Test
+    fun ranksExactNamesBeforeWordPrefixesAndPartialMatches() = runBlocking {
+        val repository = RemoteClubSearchRepository(object : ClubSearchApi {
+            override suspend fun listClubs(league: String, season: Int): List<ClubDto> = listOf(
+                ClubDto(3, "AA Northarsenal"),
+                ClubDto(2, "Zeta Arsenal Women"),
+                ClubDto(1, "FC Arsenal", "Arsenal"),
+                ClubDto(4, "AFC Arsenal Academy")
+            )
+        })
+
+        assertEquals(listOf("1", "4", "2", "3"), repository.search("arsenal").map(Club::id))
+    }
+
+    @Test
     fun blankSearchSkipsNetworkAndRequestFailureReachesCaller() = runBlocking {
         val repository = RemoteClubSearchRepository(object : ClubSearchApi {
             override suspend fun listClubs(league: String, season: Int): List<ClubDto> =
