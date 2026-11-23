@@ -67,6 +67,16 @@ AppNavGraph (@Serializable Routes + NavigationEvent) → presentation/ui screens
 - `StateFlow` и `collectAsStateWithLifecycle`
 - JUnit 4 и Compose UI Testing
 
+## Источник данных для поиска клубов
+
+[OpenLigaDB](https://api.openligadb.de/index.html) предоставляет каталоги клубов без регистрации. MATCHDAY загружает через Retrofit каталоги АПЛ и Бундеслиги сезона 2026/27 и Лиги чемпионов сезона 2025/26. Репозиторий ищет по части полного или короткого названия без учёта регистра.
+
+Для проверки ответа API откройте [каталог Лиги чемпионов](https://api.openligadb.de/getavailableteams/ucl/2025) и найдите `FK Kairat`. Поля `teamId`, `teamName` и `teamIconUrl` преобразуются в `Club(id, name, badgeUrl)`. У клуба может отсутствовать HTTPS-ссылка на эмблему.
+
+ViewModel может получить `SearchClubsUseCase` через Koin. Вызов `searchClubs(query)` выполняется из корутины. Пустой список означает, что совпадений нет. Ошибки запроса передаются вызывающему коду, чтобы экран мог показать ошибку и повторить запрос.
+
+Данные предоставлены [OpenLigaDB по лицензии ODbL 1.0](https://www.openligadb.de/en/license).
+
 ## Запуск и проверка
 
 1. Откройте проект в Android Studio.
