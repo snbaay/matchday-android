@@ -22,12 +22,19 @@ internal class RemoteClubSearchRepository(
         }
 
         return clubs
-            .filter { club ->
-                normalizeClubName(club.teamName).contains(name) ||
-                    club.shortName?.let(::normalizeClubName)?.contains(name) == true
+            .mapNotNull { club ->
+                val rank = listOfNotNull(club.teamName, club.shortName)
+                    .mapNotNull { matchRank(normalizeClubName(it), name) }
+                    .minOrNull() ?: return@mapNotNull null
+                rank to club
             }
-            .distinctBy(ClubDto::teamId)
-            .map { club ->
+            .sortedWith(
+                compareBy<Pair<Int, ClubDto>> { (rank, _) -> rank }
+                    .thenBy(String.CASE_INSENSITIVE_ORDER) { (_, club) -> club.teamName }
+                    .thenBy { (_, club) -> club.teamId }
+            )
+            .distinctBy { (_, club) -> club.teamId }
+            .map { (_, club) ->
                 Club(
                     id = club.teamId.toString(),
                     name = club.teamName,
@@ -36,7 +43,6 @@ internal class RemoteClubSearchRepository(
                     }
                 )
             }
-            .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER, Club::name))
     }
 }
 
@@ -50,3 +56,10 @@ private fun normalizeClubName(value: String): String =
         .replace(combiningMarks, "")
         .replace(nameSeparators, " ")
         .trim()
+
+private fun matchRank(name: String, query: String): Int? = when {
+    name == query -> 0
+    name.startsWith(query) || name.contains(" $query") -> 1
+    name.contains(query) -> 2
+    else -> null
+}
