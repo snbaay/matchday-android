@@ -69,11 +69,11 @@ AppNavGraph (@Serializable Routes + NavigationEvent) → presentation/ui screens
 
 ## Источник данных для поиска клубов
 
-[OpenLigaDB](https://api.openligadb.de/index.html) предоставляет каталоги клубов без регистрации. MATCHDAY загружает через Retrofit каталоги АПЛ, Бундеслиги и Лиги Европы сезона 2026/27 и Лиги чемпионов сезона 2025/26. Поиск учитывает полное и короткое название, игнорирует регистр и диакритические знаки и поднимает точные совпадения выше частичных.
+[OpenLigaDB](https://api.openligadb.de/index.html) предоставляет каталоги клубов без регистрации. MATCHDAY загружает через Retrofit каталоги АПЛ, Бундеслиги и Лиги Европы сезона 2026/27 и Лиги чемпионов сезона 2025/26. Поиск совпадает с частью полного или короткого названия без учёта регистра и диакритических знаков. Результаты идут по алфавиту.
 
 Для проверки ответа API откройте [каталог Лиги чемпионов](https://api.openligadb.de/getavailableteams/ucl/2025) и найдите `FK Kairat`. Поля `teamId`, `teamName` и `teamIconUrl` преобразуются в `Club(id, name, badgeUrl)`. У клуба может отсутствовать HTTPS-ссылка на эмблему.
 
-ViewModel может получить `SearchClubsUseCase` через Koin. Вызов `searchClubs(query)` выполняется из корутины. Пустой список означает, что совпадений нет. Сетевые ошибки передаются как `ClubSearchException`. Ошибка `RateLimited` включает `retryAfterSeconds`, если сервис прислал допустимый `Retry-After`.
+ViewModel может получить `SearchClubsUseCase` через Koin. Вызов `searchClubs(query)` выполняется из корутины. Пустой список означает, что совпадений нет. Сетевые ошибки передаются как `ClubSearchException`. При сбое экран может показать сообщение об ошибке и предложить повторить запрос.
 
 Данные предоставлены [OpenLigaDB по лицензии ODbL 1.0](https://www.openligadb.de/en/license).
 

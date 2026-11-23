@@ -12,9 +12,6 @@ sealed class ClubSearchException(message: String, cause: Exception) : IOExceptio
     class Http(val statusCode: Int, cause: Exception) :
         ClubSearchException("The club catalog returned HTTP $statusCode", cause)
 
-    class RateLimited(val retryAfterSeconds: Long?, cause: Exception) :
-        ClubSearchException("The club catalog is rate-limiting requests", cause)
-
     class InvalidResponse(cause: Exception) :
         ClubSearchException("Could not decode the club catalog", cause)
 }
