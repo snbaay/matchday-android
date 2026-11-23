@@ -6,6 +6,11 @@ import com.example.matchday.domain.repository.ClubSearchRepository
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.text.Normalizer
+import java.time.Duration
+import java.time.Instant
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import java.util.Locale
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -45,6 +50,7 @@ internal class RemoteClubSearchRepository(
             )
             .map { (_, club) -> club }
     }
+
     private suspend fun loadCatalogs(): List<ClubDto> = try {
         coroutineScope {
             catalogSeasons.map { (league, season) ->
@@ -52,6 +58,10 @@ internal class RemoteClubSearchRepository(
             }.awaitAll().flatten()
         }
     } catch (error: HttpException) {
+        if (error.code() == 429) {
+            val delay = error.response()?.headers()?.get("Retry-After")?.let(::parseRetryAfter)
+            throw ClubSearchException.RateLimited(delay, error)
+        }
         throw ClubSearchException.Http(error.code(), error)
     } catch (error: SerializationException) {
         throw ClubSearchException.InvalidResponse(error)
@@ -83,4 +93,17 @@ private fun matchRank(name: String, query: String): Int? = when {
     name.startsWith(query) || name.contains(" $query") -> 1
     name.contains(query) -> 2
     else -> null
+}
+
+private fun parseRetryAfter(header: String): Long? {
+    val value = header.trim()
+    value.toLongOrNull()?.let { return it.takeIf { seconds -> seconds >= 0 } }
+
+    return try {
+        val retryAt = ZonedDateTime.parse(value, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant()
+        val delay = Duration.between(Instant.now(), retryAt)
+        (delay.seconds + if (delay.nano > 0) 1 else 0).coerceAtLeast(0)
+    } catch (_: DateTimeParseException) {
+        null
+    }
 }
