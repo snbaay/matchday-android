@@ -27,6 +27,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.example.matchday.R
+import com.example.matchday.domain.model.Club
 import com.example.matchday.presentation.ui.components.EmptyState
 import com.example.matchday.presentation.viewmodel.ClubSearchResult
 import com.example.matchday.presentation.viewmodel.ClubSearchUiState
@@ -35,7 +36,8 @@ fun LazyListScope.clubSearchItems(
     state: ClubSearchUiState,
     onQueryChange: (String) -> Unit,
     onSearch: () -> Unit,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
+    onSaveClub: ((Club) -> Unit)? = null
 ) {
     item(key = "club-search-form") {
         ClubSearchForm(state, onQueryChange, onSearch)
@@ -74,7 +76,7 @@ fun LazyListScope.clubSearchItems(
             }
         }
         is ClubSearchResult.Success -> items(result.clubs, key = { "club-result-${it.id}" }) { club ->
-            ClubResultRow(club)
+            ClubResultRow(club, onSaveClub)
         }
     }
 }
