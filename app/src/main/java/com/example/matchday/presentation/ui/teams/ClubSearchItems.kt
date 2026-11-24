@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -57,6 +58,15 @@ fun LazyListScope.clubSearchItems(
                 message = stringResource(R.string.club_search_empty),
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
             )
+        }
+        is ClubSearchResult.Error -> item(key = "club-search-status") {
+            Column(modifier = Modifier.padding(top = 8.dp)) {
+                Text(
+                    text = stringResource(R.string.club_search_error, result.query),
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
         }
         is ClubSearchResult.Success -> items(result.clubs, key = { "club-result-${it.id}" }) { club ->
             Text(text = club.name, modifier = Modifier.padding(vertical = 8.dp))
