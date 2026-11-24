@@ -4,6 +4,8 @@ import com.example.matchday.domain.model.Club
 import com.example.matchday.domain.repository.TournamentRepository
 import com.example.matchday.domain.usecase.SearchClubsUseCase
 import com.example.matchday.presentation.viewmodel.AppViewModel
+import com.example.matchday.presentation.viewmodel.ClubSearchUiState
+import com.example.matchday.presentation.viewmodel.ClubSearchViewModel
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -24,11 +26,12 @@ class AppModulesTest {
     }
 
     @Test
-    fun resolvesClubSearchUseCase() = runBlocking {
-        val app = koinApplication { modules(dataModule, domainModule) }
+    fun resolvesClubSearchDependencies() = runBlocking {
+        val app = koinApplication { modules(dataModule, domainModule, presentationModule) }
         try {
             val search = app.koin.get<SearchClubsUseCase>()
             assertEquals(emptyList<Club>(), search(""))
+            assertEquals(ClubSearchUiState(), app.koin.get<ClubSearchViewModel>().uiState.value)
         } finally {
             app.close()
         }

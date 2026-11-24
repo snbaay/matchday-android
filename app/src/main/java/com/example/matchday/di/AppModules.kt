@@ -16,6 +16,7 @@ import com.example.matchday.domain.usecase.ObserveTournamentsUseCase
 import com.example.matchday.domain.usecase.SaveScoreUseCase
 import com.example.matchday.domain.usecase.SearchClubsUseCase
 import com.example.matchday.presentation.viewmodel.AppViewModel
+import com.example.matchday.presentation.viewmodel.ClubSearchViewModel
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.bind
@@ -41,4 +42,5 @@ val domainModule = module {
 
 val presentationModule = module {
     viewModelOf(::AppViewModel)
+    viewModelOf(::ClubSearchViewModel)
 }

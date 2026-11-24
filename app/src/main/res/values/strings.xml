@@ -23,6 +23,14 @@
     <string name="team_count">Teams: %1$d</string>
     <string name="match_count">Matches: %1$d</string>
     <string name="teams">Teams</string>
+    <string name="tournament_teams">Tournament teams</string>
+    <string name="club_search_club_name">Club name</string>
+    <string name="club_search_title">Search clubs</string>
+    <string name="club_search_loading">Searching for clubs…</string>
+    <string name="club_search_empty">No matching clubs found.</string>
+    <string name="club_search_error">Club search failed for “%1$s”.</string>
+    <string name="club_search_retry">Retry</string>
+    <string name="club_search_save_club">Save %1$s</string>
     <string name="matches">Matches</string>
     <string name="standings">Standings</string>
     <string name="teams_title">Teams: %1$s</string>
