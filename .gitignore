@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Local development instructions
+/docs/MATCHDAY_Assignments_8_9.md
