@@ -21,6 +21,7 @@ sealed interface ClubSearchResult {
     data object Loading : ClubSearchResult
     data class Success(val clubs: List<Club>) : ClubSearchResult
     data object Empty : ClubSearchResult
+    data class Error(val query: String) : ClubSearchResult
 }
 
 class ClubSearchViewModel(
@@ -48,7 +49,7 @@ class ClubSearchViewModel(
                 val clubs = searchClubs(query)
                 if (clubs.isEmpty()) ClubSearchResult.Empty else ClubSearchResult.Success(clubs)
             } catch (_: ClubSearchException) {
-                ClubSearchResult.Idle
+                ClubSearchResult.Error(query)
             }
             _uiState.update { it.copy(result = result) }
         }
