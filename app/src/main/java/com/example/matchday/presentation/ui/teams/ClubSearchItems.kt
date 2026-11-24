@@ -1,0 +1,63 @@
+package com.example.matchday.presentation.ui.teams
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.dp
+import com.example.matchday.R
+import com.example.matchday.presentation.viewmodel.ClubSearchUiState
+
+fun LazyListScope.clubSearchItems(
+    state: ClubSearchUiState,
+    onQueryChange: (String) -> Unit,
+    onSearch: () -> Unit
+) {
+    item(key = "club-search-form") {
+        ClubSearchForm(state, onQueryChange, onSearch)
+    }
+}
+
+@Composable
+private fun ClubSearchForm(
+    state: ClubSearchUiState,
+    onQueryChange: (String) -> Unit,
+    onSearch: () -> Unit
+) {
+    val focusManager = LocalFocusManager.current
+    val canSubmit = state.query.isNotBlank()
+    val submit = {
+        if (canSubmit) {
+            focusManager.clearFocus()
+            onSearch()
+        }
+    }
+    Column(
+        modifier = Modifier.padding(vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        OutlinedTextField(
+            value = state.query,
+            onValueChange = onQueryChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(R.string.club_search_club_name)) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = { submit() })
+        )
+        OutlinedButton(onClick = submit, enabled = canSubmit) {
+            Text(stringResource(R.string.club_search_title))
+        }
+    }
+}
