@@ -13,4 +13,7 @@ interface SavedClubDao {
 
     @Query("SELECT * FROM saved_clubs ORDER BY name COLLATE NOCASE ASC, id ASC")
     fun observeAll(): Flow<List<SavedClubEntity>>
+
+    @Query("UPDATE saved_clubs SET note = :note WHERE id = :clubId")
+    suspend fun updateNote(clubId: String, note: String)
 }
