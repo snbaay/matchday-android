@@ -8,12 +8,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
@@ -29,7 +33,7 @@ private val badgeRequestHeaders = NetworkHeaders.Builder()
     .build()
 
 @Composable
-internal fun ClubResultRow(club: Club) {
+internal fun ClubResultRow(club: Club, onSaveClub: ((Club) -> Unit)?) {
     val fallback = painterResource(R.drawable.ic_club_badge_placeholder)
     val context = LocalPlatformContext.current
     val badgeRequest = remember(context, club.badgeUrl) {
@@ -59,5 +63,14 @@ internal fun ClubResultRow(club: Club) {
             )
         }
         Text(text = club.name, modifier = Modifier.weight(1f))
+        if (onSaveClub != null) {
+            val saveClubLabel = stringResource(R.string.club_search_save_club, club.name)
+            TextButton(
+                onClick = { onSaveClub(club) },
+                modifier = Modifier.semantics { contentDescription = saveClubLabel }
+            ) {
+                Text(stringResource(R.string.save))
+            }
+        }
     }
 }
