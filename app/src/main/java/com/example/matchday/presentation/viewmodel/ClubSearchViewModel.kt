@@ -18,7 +18,9 @@ data class ClubSearchUiState(
 
 sealed interface ClubSearchResult {
     data object Idle : ClubSearchResult
+    data object Loading : ClubSearchResult
     data class Success(val clubs: List<Club>) : ClubSearchResult
+    data object Empty : ClubSearchResult
 }
 
 class ClubSearchViewModel(
@@ -39,10 +41,12 @@ class ClubSearchViewModel(
     private fun submit(query: String) {
         if (query.isBlank()) return
         searchJob?.cancel()
+        _uiState.update { it.copy(result = ClubSearchResult.Loading) }
 
         searchJob = viewModelScope.launch {
             val result = try {
-                ClubSearchResult.Success(searchClubs(query))
+                val clubs = searchClubs(query)
+                if (clubs.isEmpty()) ClubSearchResult.Empty else ClubSearchResult.Success(clubs)
             } catch (_: ClubSearchException) {
                 ClubSearchResult.Idle
             }
