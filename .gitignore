@@ -13,3 +13,10 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Local development instructions
+/AGENTS.md
+/CLAUDE.md
+/GEMINI.md
+/.cursor/rules/matchday.mdc
+/docs/MATCHDAY_Assignments_8_9.md
