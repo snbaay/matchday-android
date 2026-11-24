@@ -16,4 +16,7 @@ interface SavedClubDao {
 
     @Query("UPDATE saved_clubs SET note = :note WHERE id = :clubId")
     suspend fun updateNote(clubId: String, note: String)
+
+    @Query("DELETE FROM saved_clubs WHERE id = :clubId")
+    suspend fun deleteById(clubId: String)
 }
