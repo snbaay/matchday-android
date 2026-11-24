@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
@@ -36,7 +37,7 @@ fun LazyListScope.clubSearchItems(
     item(key = "club-search-form") {
         ClubSearchForm(state, onQueryChange, onSearch)
     }
-    when (state.result) {
+    when (val result = state.result) {
         ClubSearchResult.Idle -> Unit
         ClubSearchResult.Loading -> item(key = "club-search-status") {
             Row(
@@ -57,7 +58,9 @@ fun LazyListScope.clubSearchItems(
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
             )
         }
-        is ClubSearchResult.Success -> Unit
+        is ClubSearchResult.Success -> items(result.clubs, key = { "club-result-${it.id}" }) { club ->
+            Text(text = club.name, modifier = Modifier.padding(vertical = 8.dp))
+        }
     }
 }
 
