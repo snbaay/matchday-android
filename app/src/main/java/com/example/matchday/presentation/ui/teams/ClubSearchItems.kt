@@ -2,21 +2,30 @@ package com.example.matchday.presentation.ui.teams
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.example.matchday.R
+import com.example.matchday.presentation.ui.components.EmptyState
+import com.example.matchday.presentation.viewmodel.ClubSearchResult
 import com.example.matchday.presentation.viewmodel.ClubSearchUiState
 
 fun LazyListScope.clubSearchItems(
@@ -26,6 +35,29 @@ fun LazyListScope.clubSearchItems(
 ) {
     item(key = "club-search-form") {
         ClubSearchForm(state, onQueryChange, onSearch)
+    }
+    when (state.result) {
+        ClubSearchResult.Idle -> Unit
+        ClubSearchResult.Loading -> item(key = "club-search-status") {
+            Row(
+                modifier = Modifier.padding(vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                Text(
+                    text = stringResource(R.string.club_search_loading),
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+                )
+            }
+        }
+        ClubSearchResult.Empty -> item(key = "club-search-status") {
+            EmptyState(
+                message = stringResource(R.string.club_search_empty),
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+            )
+        }
+        is ClubSearchResult.Success -> Unit
     }
 }
 
