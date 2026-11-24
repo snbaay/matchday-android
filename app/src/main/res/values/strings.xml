@@ -29,6 +29,7 @@
     <string name="club_search_loading">Searching for clubs…</string>
     <string name="club_search_empty">No matching clubs found.</string>
     <string name="club_search_error">Club search failed for “%1$s”.</string>
+    <string name="club_search_retry">Retry</string>
     <string name="matches">Matches</string>
     <string name="standings">Standings</string>
     <string name="teams_title">Teams: %1$s</string>

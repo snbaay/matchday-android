@@ -39,6 +39,11 @@ class ClubSearchViewModel(
         submit(uiState.value.query.trim())
     }
 
+    fun retry() {
+        val error = uiState.value.result as? ClubSearchResult.Error ?: return
+        submit(error.query)
+    }
+
     private fun submit(query: String) {
         if (query.isBlank()) return
         searchJob?.cancel()
