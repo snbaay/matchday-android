@@ -74,7 +74,7 @@ fun LazyListScope.clubSearchItems(
             }
         }
         is ClubSearchResult.Success -> items(result.clubs, key = { "club-result-${it.id}" }) { club ->
-            Text(text = club.name, modifier = Modifier.padding(vertical = 8.dp))
+            ClubResultRow(club)
         }
     }
 }
