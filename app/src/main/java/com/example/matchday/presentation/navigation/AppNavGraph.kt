@@ -20,9 +20,12 @@ import com.example.matchday.presentation.ui.matches.MatchesScreen
 import com.example.matchday.presentation.ui.matches.ScoreScreen
 import com.example.matchday.presentation.ui.standings.StandingsScreen
 import com.example.matchday.presentation.ui.teams.TeamsScreen
+import com.example.matchday.presentation.ui.teams.clubSearchItems
 import com.example.matchday.presentation.ui.tournaments.TournamentDashboardScreen
 import com.example.matchday.presentation.ui.tournaments.TournamentListScreen
 import com.example.matchday.presentation.viewmodel.AppViewModel
+import com.example.matchday.presentation.viewmodel.ClubSearchViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun AppNavGraph(appViewModel: AppViewModel, modifier: Modifier = Modifier) {
@@ -67,12 +70,24 @@ fun AppNavGraph(appViewModel: AppViewModel, modifier: Modifier = Modifier) {
         composable<TeamsRoute> { entry ->
             val id = entry.toRoute<TeamsRoute>().tournamentId
             val tournament = data.tournaments.find { it.id == id }
-            if (tournament == null) MissingItemScreen(onBack) else TeamsScreen(
-                tournamentName = tournament.name,
-                teams = data.teams.filter { it.tournamentId == id },
-                onAddTeam = { appViewModel.addTeam(id, it) },
-                onBack = onBack
-            )
+            if (tournament == null) MissingItemScreen(onBack) else {
+                val clubSearch = koinViewModel<ClubSearchViewModel>(viewModelStoreOwner = entry)
+                val searchState by clubSearch.uiState.collectAsStateWithLifecycle()
+                TeamsScreen(
+                    tournamentName = tournament.name,
+                    teams = data.teams.filter { it.tournamentId == id },
+                    onAddTeam = { appViewModel.addTeam(id, it) },
+                    onBack = onBack,
+                    clubSearch = {
+                        clubSearchItems(
+                            state = searchState,
+                            onQueryChange = clubSearch::updateQuery,
+                            onSearch = clubSearch::search,
+                            onRetry = clubSearch::retry
+                        )
+                    }
+                )
+            }
         }
         composable<MatchesRoute> { entry ->
             val id = entry.toRoute<MatchesRoute>().tournamentId
