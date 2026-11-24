@@ -2,12 +2,16 @@ package com.example.matchday.presentation.ui.teams
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -31,7 +35,8 @@ fun TeamsScreen(
     tournamentName: String,
     teams: List<Team>,
     onAddTeam: (String) -> Result<String>,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    clubSearch: (LazyListScope.() -> Unit)? = null
 ) {
     var showAddTeamDialog by rememberSaveable { mutableStateOf(false) }
     var teamName by rememberSaveable { mutableStateOf("") }
@@ -43,7 +48,11 @@ fun TeamsScreen(
         }
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(innerPadding),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
+                .imePadding(),
             contentPadding = PaddingValues(16.dp)
         ) {
             item {
@@ -54,11 +63,21 @@ fun TeamsScreen(
                     Text(stringResource(R.string.add_team_title))
                 }
             }
+            clubSearch?.invoke(this)
             if (teams.isEmpty()) {
                 item {
                     EmptyState(message = stringResource(R.string.no_teams_instruction))
                 }
             } else {
+                if (clubSearch != null) {
+                    item {
+                        Text(
+                            text = stringResource(R.string.tournament_teams),
+                            modifier = Modifier.padding(top = 12.dp),
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                }
                 items(teams, key = { team -> team.id }) { team ->
                     TeamRow(team = team)
                 }
