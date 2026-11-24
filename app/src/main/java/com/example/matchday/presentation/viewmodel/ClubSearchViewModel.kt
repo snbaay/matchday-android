@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.matchday.domain.model.Club
 import com.example.matchday.domain.model.ClubSearchException
 import com.example.matchday.domain.usecase.SearchClubsUseCase
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -29,7 +28,6 @@ class ClubSearchViewModel(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ClubSearchUiState())
     val uiState = _uiState.asStateFlow()
-    private var searchJob: Job? = null
 
     fun updateQuery(query: String) {
         _uiState.update { it.copy(query = query) }
@@ -45,11 +43,10 @@ class ClubSearchViewModel(
     }
 
     private fun submit(query: String) {
-        if (query.isBlank()) return
-        searchJob?.cancel()
+        if (query.isBlank() || uiState.value.result == ClubSearchResult.Loading) return
         _uiState.update { it.copy(result = ClubSearchResult.Loading) }
 
-        searchJob = viewModelScope.launch {
+        viewModelScope.launch {
             val result = try {
                 val clubs = searchClubs(query)
                 if (clubs.isEmpty()) ClubSearchResult.Empty else ClubSearchResult.Success(clubs)
