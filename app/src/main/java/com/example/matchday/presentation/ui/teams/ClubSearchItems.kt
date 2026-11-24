@@ -86,7 +86,7 @@ private fun ClubSearchForm(
     onSearch: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
-    val canSubmit = state.query.isNotBlank()
+    val canSubmit = state.query.isNotBlank() && state.result != ClubSearchResult.Loading
     val submit = {
         if (canSubmit) {
             focusManager.clearFocus()
