@@ -82,7 +82,8 @@ fun AppNavGraph(appViewModel: AppViewModel, modifier: Modifier = Modifier) {
                         clubSearchItems(
                             state = searchState,
                             onQueryChange = clubSearch::updateQuery,
-                            onSearch = clubSearch::search
+                            onSearch = clubSearch::search,
+                            onRetry = clubSearch::retry
                         )
                     }
                 )

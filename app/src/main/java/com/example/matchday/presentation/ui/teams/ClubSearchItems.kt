@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,7 +34,8 @@ import com.example.matchday.presentation.viewmodel.ClubSearchUiState
 fun LazyListScope.clubSearchItems(
     state: ClubSearchUiState,
     onQueryChange: (String) -> Unit,
-    onSearch: () -> Unit
+    onSearch: () -> Unit,
+    onRetry: () -> Unit
 ) {
     item(key = "club-search-form") {
         ClubSearchForm(state, onQueryChange, onSearch)
@@ -66,6 +68,9 @@ fun LazyListScope.clubSearchItems(
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                     color = MaterialTheme.colorScheme.error
                 )
+                TextButton(onClick = onRetry) {
+                    Text(stringResource(R.string.club_search_retry))
+                }
             }
         }
         is ClubSearchResult.Success -> items(result.clubs, key = { "club-result-${it.id}" }) { club ->
