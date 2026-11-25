@@ -14,6 +14,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -26,6 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -35,6 +37,7 @@ import com.example.matchday.domain.model.ClubSortOrder
 import com.example.matchday.domain.model.SavedClub
 import com.example.matchday.domain.model.Team
 import com.example.matchday.presentation.ui.components.AppTopBar
+import com.example.matchday.presentation.ui.components.ClubBadge
 import com.example.matchday.presentation.ui.components.EmptyState
 import com.example.matchday.presentation.ui.errorText
 import com.example.matchday.presentation.viewmodel.SavedClubsUiState
@@ -50,7 +53,8 @@ internal fun MyClubsScreen(
     snackbarHostState: SnackbarHostState,
     tournamentName: String? = null,
     tournamentTeams: List<Team> = emptyList(),
-    onAddTeam: ((String) -> Result<String>)? = null
+    onAddTeam: ((String) -> Result<String>)? = null,
+    onOpenTeams: (() -> Unit)? = null
 ) {
     var editingClubId by rememberSaveable { mutableStateOf<String?>(null) }
     var removingClubId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -83,7 +87,16 @@ internal fun MyClubsScreen(
                     }
                     item { SortControls(state.sortOrder, onSortOrderChange) }
                     if (state.clubs.isEmpty()) {
-                        item { EmptyState(message = stringResource(R.string.saved_clubs_empty)) }
+                        item {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                EmptyState(message = stringResource(R.string.saved_clubs_empty))
+                                if (onOpenTeams != null) {
+                                    OutlinedButton(onClick = onOpenTeams) {
+                                        Text(stringResource(R.string.open_teams_search))
+                                    }
+                                }
+                            }
+                        }
                     }
                     items(state.clubs, key = { it.id }) { club ->
                         SavedClubCard(
@@ -184,17 +197,28 @@ private fun SavedClubCard(
     onRemove: () -> Unit
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(club.name, style = MaterialTheme.typography.titleMedium)
-            if (club.note.isNotBlank()) {
-                Text(club.note, style = MaterialTheme.typography.bodyMedium)
-            }
-            if (onAddTeam != null) {
-                TextButton(onClick = onAddTeam, enabled = !inTournament) {
-                    Text(stringResource(if (inTournament) R.string.club_in_tournament else R.string.add_club_to_tournament))
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ClubBadge(badgeUrl = club.badgeUrl)
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(club.name, style = MaterialTheme.typography.titleMedium)
+                    if (club.note.isNotBlank()) {
+                        Text(club.note, style = MaterialTheme.typography.bodyMedium)
+                    }
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (onAddTeam != null) {
+                    TextButton(onClick = onAddTeam, enabled = !inTournament) {
+                        Text(stringResource(if (inTournament) R.string.club_in_tournament else R.string.add_club_to_tournament))
+                    }
+                }
                 TextButton(onClick = onEdit) { Text(stringResource(R.string.saved_club_edit_note)) }
                 TextButton(onClick = onRemove) { Text(stringResource(R.string.saved_club_remove)) }
             }

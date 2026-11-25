@@ -108,6 +108,19 @@ class RemoteClubSearchRepositoryTest {
     }
 
     @Test
+    fun returnsClubsFromHealthyCatalogsWhenOneCatalogFails() = runBlocking {
+        val kairat = ClubDto(7082, "FK Kairat", "Kairat Almaty")
+        val repository = RemoteClubSearchRepository(object : ClubSearchApi {
+            override suspend fun listClubs(league: String, season: Int): List<ClubDto> =
+                if (league == "uel2026") throw IOException("Temporary outage")
+                else if (league == "ucl") listOf(kairat)
+                else emptyList()
+        })
+
+        assertEquals(listOf(Club("7082", "FK Kairat", null)), repository.search("kairat"))
+    }
+
+    @Test
     fun leavesCoroutineCancellationIntact() = runBlocking {
         val cancelled = failingRepository { CancellationException("Search superseded") }
 
