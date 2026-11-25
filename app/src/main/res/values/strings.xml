@@ -31,6 +31,9 @@
     <string name="club_search_error">Club search failed for “%1$s”.</string>
     <string name="club_search_retry">Retry</string>
     <string name="club_search_save_club">Save %1$s</string>
+    <string name="my_clubs">My Clubs</string>
+    <string name="saved_clubs_empty">No saved clubs yet. Save a club from search in Teams.</string>
+    <string name="saved_clubs_load_failed">Could not load your saved clubs.</string>
     <string name="matches">Matches</string>
     <string name="standings">Standings</string>
     <string name="teams_title">Teams: %1$s</string>
