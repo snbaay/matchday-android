@@ -17,11 +17,13 @@ import com.example.matchday.domain.usecase.CreateMatchUseCase
 import com.example.matchday.domain.usecase.CreateTournamentUseCase
 import com.example.matchday.domain.usecase.CalculateStandingsUseCase
 import com.example.matchday.domain.usecase.GetStandingsUseCase
+import com.example.matchday.domain.usecase.ObserveSavedClubsUseCase
 import com.example.matchday.domain.usecase.ObserveTournamentsUseCase
 import com.example.matchday.domain.usecase.SaveScoreUseCase
 import com.example.matchday.domain.usecase.SearchClubsUseCase
 import com.example.matchday.presentation.viewmodel.AppViewModel
 import com.example.matchday.presentation.viewmodel.ClubSearchViewModel
+import com.example.matchday.presentation.viewmodel.SavedClubsViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
@@ -53,9 +55,11 @@ val domainModule = module {
     singleOf(::CalculateStandingsUseCase)
     singleOf(::GetStandingsUseCase)
     singleOf(::SearchClubsUseCase)
+    singleOf(::ObserveSavedClubsUseCase)
 }
 
 val presentationModule = module {
     viewModelOf(::AppViewModel)
     viewModelOf(::ClubSearchViewModel)
+    viewModelOf(::SavedClubsViewModel)
 }
