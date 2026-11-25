@@ -2,14 +2,17 @@ package com.example.matchday.di
 
 import androidx.room.Room
 import com.example.matchday.data.InMemoryTournamentRepository
+import com.example.matchday.data.local.DataStoreClubSortPreferences
 import com.example.matchday.data.local.InMemoryTournamentDataSource
 import com.example.matchday.data.local.LocalSavedClubsRepository
 import com.example.matchday.data.local.SavedClubDao
 import com.example.matchday.data.local.SavedClubsDatabase
+import com.example.matchday.data.local.clubPreferencesDataStore
 import com.example.matchday.data.remote.ClubSearchApi
 import com.example.matchday.data.remote.RemoteClubSearchRepository
 import com.example.matchday.data.remote.createClubSearchApi
 import com.example.matchday.domain.repository.ClubSearchRepository
+import com.example.matchday.domain.repository.ClubSortPreferences
 import com.example.matchday.domain.repository.SavedClubsRepository
 import com.example.matchday.domain.repository.TournamentRepository
 import com.example.matchday.domain.usecase.AddTeamUseCase
@@ -47,6 +50,7 @@ val dataModule = module {
     }
     single<SavedClubDao> { get<SavedClubsDatabase>().savedClubDao() }
     singleOf(::LocalSavedClubsRepository) bind SavedClubsRepository::class
+    single<ClubSortPreferences> { DataStoreClubSortPreferences(androidContext().clubPreferencesDataStore) }
 }
 
 val domainModule = module {
