@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -28,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.matchday.R
+import com.example.matchday.domain.model.ClubSortOrder
 import com.example.matchday.domain.model.SavedClub
 import com.example.matchday.presentation.ui.components.AppTopBar
 import com.example.matchday.presentation.ui.components.EmptyState
@@ -37,6 +39,7 @@ import com.example.matchday.presentation.viewmodel.SavedClubsUiState
 internal fun MyClubsScreen(
     state: SavedClubsUiState,
     onBack: () -> Unit,
+    onSortOrderChange: (ClubSortOrder) -> Unit,
     onUpdateNote: (String, String) -> Unit,
     onDeleteClub: (String) -> Unit,
     snackbarHostState: SnackbarHostState
@@ -60,6 +63,7 @@ internal fun MyClubsScreen(
                     Text(stringResource(R.string.saved_clubs_load_failed), color = MaterialTheme.colorScheme.error)
                 }
                 is SavedClubsUiState.Content -> {
+                    item { SortControls(state.sortOrder, onSortOrderChange) }
                     if (state.clubs.isEmpty()) {
                         item { EmptyState(message = stringResource(R.string.saved_clubs_empty)) }
                     }
@@ -117,6 +121,26 @@ internal fun MyClubsScreen(
                     TextButton(onClick = { removingClubId = null }) { Text(stringResource(R.string.cancel)) }
                 }
             )
+        }
+    }
+}
+
+@Composable
+private fun SortControls(selected: ClubSortOrder, onSortOrderChange: (ClubSortOrder) -> Unit) {
+    Column {
+        Text(stringResource(R.string.saved_clubs_sort), style = MaterialTheme.typography.titleSmall)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ClubSortOrder.entries.forEach { order ->
+                val label = when (order) {
+                    ClubSortOrder.ASCENDING -> R.string.saved_clubs_ascending
+                    ClubSortOrder.DESCENDING -> R.string.saved_clubs_descending
+                }
+                FilterChip(
+                    selected = selected == order,
+                    onClick = { onSortOrderChange(order) },
+                    label = { Text(stringResource(label)) }
+                )
+            }
         }
     }
 }
