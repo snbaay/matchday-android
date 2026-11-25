@@ -35,6 +35,8 @@
     <string name="saved_clubs_empty">No saved clubs yet. Save a club from search in Teams.</string>
     <string name="saved_clubs_load_failed">Could not load your saved clubs.</string>
     <string name="saved_club_confirmation">Saved %1$s to My Clubs</string>
+    <string name="saved_club_note">Note</string>
+    <string name="saved_club_edit_note">Edit note</string>
     <string name="matches">Matches</string>
     <string name="standings">Standings</string>
     <string name="teams_title">Teams: %1$s</string>

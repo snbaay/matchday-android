@@ -68,7 +68,9 @@ fun AppNavGraph(appViewModel: AppViewModel, modifier: Modifier = Modifier) {
             val state by savedClubs.uiState.collectAsStateWithLifecycle()
             MyClubsScreen(
                 state = state,
-                onBack = onBack
+                onBack = onBack,
+                onUpdateNote = savedClubs::updateNote,
+                snackbarHostState = rememberSavedClubsSnackbar(savedClubs)
             )
         }
         composable<TournamentRoute> { entry ->

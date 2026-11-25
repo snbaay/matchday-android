@@ -22,6 +22,7 @@ import com.example.matchday.domain.usecase.ObserveTournamentsUseCase
 import com.example.matchday.domain.usecase.SaveClubUseCase
 import com.example.matchday.domain.usecase.SaveScoreUseCase
 import com.example.matchday.domain.usecase.SearchClubsUseCase
+import com.example.matchday.domain.usecase.UpdateClubNoteUseCase
 import com.example.matchday.presentation.viewmodel.AppViewModel
 import com.example.matchday.presentation.viewmodel.ClubSearchViewModel
 import com.example.matchday.presentation.viewmodel.SavedClubsViewModel
@@ -58,6 +59,7 @@ val domainModule = module {
     singleOf(::SearchClubsUseCase)
     singleOf(::ObserveSavedClubsUseCase)
     singleOf(::SaveClubUseCase)
+    singleOf(::UpdateClubNoteUseCase)
 }
 
 val presentationModule = module {

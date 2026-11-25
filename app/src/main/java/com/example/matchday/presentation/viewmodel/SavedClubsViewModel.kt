@@ -6,6 +6,7 @@ import com.example.matchday.domain.model.Club
 import com.example.matchday.domain.model.SavedClub
 import com.example.matchday.domain.usecase.ObserveSavedClubsUseCase
 import com.example.matchday.domain.usecase.SaveClubUseCase
+import com.example.matchday.domain.usecase.UpdateClubNoteUseCase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,7 +29,8 @@ sealed interface SavedClubsMessage {
 
 class SavedClubsViewModel(
     observeSavedClubs: ObserveSavedClubsUseCase,
-    private val saveClub: SaveClubUseCase
+    private val saveClub: SaveClubUseCase,
+    private val updateClubNote: UpdateClubNoteUseCase
 ) : ViewModel() {
     val uiState = observeSavedClubs().map<List<SavedClub>, SavedClubsUiState> { clubs ->
         SavedClubsUiState.Content(clubs)
@@ -41,6 +43,8 @@ class SavedClubsViewModel(
     val messages = messageChannel.receiveAsFlow()
 
     fun save(club: Club) = write(SavedClubsMessage.ClubSaved(club.name)) { saveClub(club) }
+
+    fun updateNote(clubId: String, note: String) = write { updateClubNote(clubId, note) }
 
     private fun write(success: SavedClubsMessage? = null, operation: suspend () -> Unit) {
         viewModelScope.launch {

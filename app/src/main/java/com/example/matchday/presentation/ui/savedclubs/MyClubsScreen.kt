@@ -3,17 +3,27 @@ package com.example.matchday.presentation.ui.savedclubs
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -26,10 +36,16 @@ import com.example.matchday.presentation.viewmodel.SavedClubsUiState
 @Composable
 internal fun MyClubsScreen(
     state: SavedClubsUiState,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onUpdateNote: (String, String) -> Unit,
+    snackbarHostState: SnackbarHostState
 ) {
+    var editingClubId by rememberSaveable { mutableStateOf<String?>(null) }
+    var noteDraft by rememberSaveable { mutableStateOf("") }
+
     Scaffold(
-        topBar = { AppTopBar(title = stringResource(R.string.my_clubs), onBack = onBack) }
+        topBar = { AppTopBar(title = stringResource(R.string.my_clubs), onBack = onBack) },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
@@ -46,19 +62,58 @@ internal fun MyClubsScreen(
                         item { EmptyState(message = stringResource(R.string.saved_clubs_empty)) }
                     }
                     items(state.clubs, key = { it.id }) { club ->
-                        SavedClubCard(club)
+                        SavedClubCard(
+                            club = club,
+                            onEdit = {
+                                noteDraft = club.note
+                                editingClubId = club.id
+                            }
+                        )
                     }
                 }
             }
         }
     }
+
+    if (state is SavedClubsUiState.Content) {
+        state.clubs.find { it.id == editingClubId }?.let { club ->
+            AlertDialog(
+                onDismissRequest = { editingClubId = null },
+                title = { Text(stringResource(R.string.saved_club_edit_note)) },
+                text = {
+                    OutlinedTextField(
+                        value = noteDraft,
+                        onValueChange = { noteDraft = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text(stringResource(R.string.saved_club_note)) },
+                        maxLines = 5
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        onUpdateNote(club.id, noteDraft)
+                        editingClubId = null
+                    }) { Text(stringResource(R.string.save)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { editingClubId = null }) { Text(stringResource(R.string.cancel)) }
+                }
+            )
+        }
+    }
 }
 
 @Composable
-private fun SavedClubCard(club: SavedClub) {
+private fun SavedClubCard(club: SavedClub, onEdit: () -> Unit) {
     Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(club.name, style = MaterialTheme.typography.titleMedium)
+            if (club.note.isNotBlank()) {
+                Text(club.note, style = MaterialTheme.typography.bodyMedium)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onEdit) { Text(stringResource(R.string.saved_club_edit_note)) }
+            }
         }
     }
 }
