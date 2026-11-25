@@ -37,7 +37,8 @@ fun LazyListScope.clubSearchItems(
     onQueryChange: (String) -> Unit,
     onSearch: () -> Unit,
     onRetry: () -> Unit,
-    onSaveClub: ((Club) -> Unit)? = null
+    onSaveClub: ((Club) -> Unit)? = null,
+    savedClubIds: Set<String> = emptySet()
 ) {
     item(key = "club-search-form") {
         ClubSearchForm(state, onQueryChange, onSearch)
@@ -76,7 +77,7 @@ fun LazyListScope.clubSearchItems(
             }
         }
         is ClubSearchResult.Success -> items(result.clubs, key = { "club-result-${it.id}" }) { club ->
-            ClubResultRow(club, onSaveClub)
+            ClubResultRow(club = club, onSaveClub = onSaveClub, isSaved = club.id in savedClubIds)
         }
     }
 }

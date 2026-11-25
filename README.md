@@ -1,87 +1,66 @@
 # MATCHDAY — Local Tournament Manager
 
-Учебное Android-приложение для организации небольших футбольных/FIFA-турниров. Позволяет создавать турниры, добавлять команды, расписывать матчи, записывать и редактировать счёт и просматривать автоматически рассчитанную турнирную таблицу.
+Учебное Android-приложение для организации футбольных/FIFA-турниров, поиска реальных футбольных клубов через публичный REST API и ведения локального списка избранных клубов «Мои клубы».
 
-> **Ограничение текущей версии:** данные хранятся только в памяти процесса (`InMemoryTournamentDataSource`) и не сохраняются после полного закрытия приложения.
+> **Хранение данных:** сохранённые клубы и заметки хранятся в локальной БД **Room** (`saved_clubs.db`), выбранный порядок сортировки — в **Preferences DataStore** (`saved_club_preferences`), и оба сохраняются после полного закрытия приложения. Турниры, команды турнира и матчи хранятся в памяти процесса (`InMemoryTournamentDataSource`).
 
 ## Команда
 
-- **Yessenbay (P1)** — архитектура Clean Architecture, Koin DI, `AppViewModel`, репозиторий, Type-Safe Navigation, интеграция экранов.
-- **Dulat (P2)** — матчи (`MatchRow`, `MatchesScreen`), ввод и редактирование счёта (`ScoreScreen`), расчёт и отображение таблицы (`CalculateStandingsUseCase`, `StandingsScreen`).
-- **Elvina (P3)** — экран команд (`TeamsScreen`, `TeamRow`), переиспользуемые UI-компоненты (`AppTopBar`, `EmptyState`), Compose UI-тесты.
-- **Nazerke (P4)** — список и обзор турниров (`TournamentListScreen`, `TournamentDashboardScreen`, `TournamentCard`), Material 3 тема и цветовая палитра (`Color`, `Type`, `Theme`).
+- **Yessenbay (P1)** — Clean Architecture, Koin DI, `AppViewModel`, Type-Safe Navigation, сетевой слой поиска клубов через OpenLigaDB (`ClubSearchApi`, `RemoteClubSearchRepository`) и интеграция экранов.
+- **Dulat (P2)** — матчи, ввод счёта и расчёт турнирной таблицы (`MatchesScreen`, `ScoreScreen`, `StandingsScreen`, `CalculateStandingsUseCase`), локальное хранилище **Room** для сохранённых клубов (`SavedClubEntity`, `SavedClubDao`, `SavedClubsDatabase`, `LocalSavedClubsRepository`).
+- **Elvina (P3)** — экран команд и общие компоненты (`TeamsScreen`, `TeamRow`, `AppTopBar`, `EmptyState`), экран «Мои клубы» (`MyClubsScreen`, `SavedClubsViewModel`), редактирование заметок, удаление и сохранение сортировки в **Preferences DataStore** (`DataStoreClubSortPreferences`).
+- **Nazerke (P4)** — экраны турниров и Material 3 тема (`TournamentListScreen`, `TournamentDashboardScreen`, `Color`, `Type`, `Theme`), состояния поиска клубов и Retry (`ClubSearchViewModel`, `ClubSearchItems`), загрузка эмблем через **Coil** (`ClubResultRow`, `ClubBadge`).
 
 ## Возможности
 
-1. Создание и просмотр списка турниров (валидация пустого имени, 1..60 символов).
-2. Обзор выбранного турнира со счётчиками команд и матчей и быстрым переходом к разделам.
-3. Добавление команд в турнир (1..40 символов, защита от дубликатов без учёта регистра).
-4. Создание матчей между двумя разными командами (запрет на матч команды с самой собой и на повтор пары в рамках одного турнира).
-5. Ввод и редактирование счёта матча (целые числа `0..99`, безопасная обработка некорректного ввода).
-6. Автоматический пересчёт турнирной таблицы с нуля по завершённым матчам:
-   - очки: победа = `3`, ничья = `1`, поражение = `0`;
-   - сортировка: очки ↓ → разница мячей ↓ → забитые голы ↓ → название команды ↑;
-   - незавершённые матчи (`null`) не учитываются; команды с 0 матчей отображаются с нулями; редактирование счёта (например, `3:1 → 0:0`) не приводит к двойному подсчёту.
+1. **Турниры, команды, матчи и таблица:**
+   - создание турниров (1..60 символов) и добавление команд (1..40 символов, без дубликатов регистра) вручную или напрямую из «Моих клубов»;
+   - создание матчей между разными командами, ввод и редактирование счёта (`0..99`);
+   - автоматический пересчёт таблицы с нуля по завершённым матчам (`3 / 1 / 0` очков, сортировка: очки ↓ → разница голов ↓ → забитые голы ↓ → название ↑).
+2. **Поиск футбольных клубов (OpenLigaDB + Retrofit + Coil):**
+   - поиск клубов АПЛ, Бундеслиги, Лиги чемпионов и Лиги Европы из корутины через `SearchClubsUseCase`;
+   - состояния `Loading`, `Success`, `Empty`, `Error` с повтором последнего запроса (`Retry`) и отображением эмблем клубов через `Coil`.
+3. **«Мои клубы» (Room + Flow + Preferences DataStore):**
+   - сохранение выбранных клубов в локальную базу Room, реактивное обновление списка через `Flow`;
+   - добавление/редактирование заметок и удаление клубов по первичному ключу `id`;
+   - переключение сортировки `A–Z` / `Z–A` с сохранением выбора в `Preferences DataStore` между перезапусками приложения и быстрое добавление сохранённых клубов в активный турнир.
 
 ## Архитектура (Clean Architecture + MVVM)
 
 ```text
-MainActivity → Koin (AppModules) → AppViewModel (StateFlow<AppUiState>)
-                                        ↓
-                          Domain Use Cases & Models
-             (Observe/Create/Add/Save, CalculateStandingsUseCase)
-                                        ↓
-                        TournamentRepository (domain interface)
-                                        ↑
-                     InMemoryTournamentRepository (data)
-                                        ↓
-                   InMemoryTournamentDataSource → DTO → Mappers
-
-AppNavGraph (@Serializable Routes + NavigationEvent) → presentation/ui screens
+Compose Screens → ViewModels (StateFlow) → Domain Use Cases → Repository Interfaces
+                                                                     ↑
+                       ┌────────────────────────────┬────────────────┴───────────────┐
+         InMemoryTournamentRepository   RemoteClubSearchRepository     LocalSavedClubsRepository
+         (InMemoryTournamentDataSource)  (Retrofit + OpenLigaDB)       (Room + Preferences DataStore)
 ```
 
 ### Основные пакеты (`app/src/main/java/com/example/matchday/`)
 
-- **`domain/`**
-  - `model/` — чистые модели (`Tournament`, `Team`, `Match`, `StandingRow`, `AppData`, `TournamentFailure`).
-  - `repository/` — интерфейс `TournamentRepository`.
-  - `usecase/` — бизнес-операции (`TournamentUseCases.kt`, `StandingsCalculator.kt` с `CalculateStandingsUseCase`).
-- **`data/`**
-  - `InMemoryTournamentRepository.kt` — реализация `TournamentRepository` со `StateFlow<AppData>`.
-  - `local/` — источник данных в памяти (`InMemoryTournamentDataSource`), `TournamentSnapshotDto` и мапперы `TournamentMappers`.
-- **`di/`**
-  - `AppModules.kt` (`dataModule`, `domainModule`, `presentationModule`) и `MatchdayApplication.kt` — сборка зависимостей через **Koin**.
-- **`presentation/`**
-  - `navigation/` — 6 типобезопасных `@Serializable`-маршрутов (`TournamentsRoute`, `TournamentRoute`, `TeamsRoute`, `MatchesRoute`, `StandingsRoute`, `ScoreRoute`), `NavigationEvent` и `AppNavGraph`.
-  - `viewmodel/` — единый `AppViewModel` и неизменяемый `AppUiState`.
-  - `ui/` — stateless Compose-экраны (`tournaments/`, `teams/`, `matches/`, `standings/`), общие компоненты (`components/`, `ErrorText.kt`) и единая тёмная тема (`theme/`).
-- **`res/values/strings.xml`** — пользовательские тексты и сообщения об ошибках.
+- **`domain/`** — чистые модели (`Tournament`, `Team`, `Match`, `StandingRow`, `Club`, `SavedClub`, `ClubSortOrder`), контракты репозиториев и use cases (`TournamentUseCases`, `StandingsCalculator`, `SearchClubsUseCase`, `SavedClubUseCases`).
+- **`data/remote/`** — `ClubSearchApi`, `ClubDto` и `RemoteClubSearchRepository` (Retrofit + Kotlinx Serialization).
+- **`data/local/`** — `SavedClubEntity`, `SavedClubDao`, `SavedClubsDatabase`, `LocalSavedClubsRepository` (Room), `DataStoreClubSortPreferences` (Preferences DataStore) и `InMemoryTournamentDataSource`.
+- **`di/`** — Koin-модули (`dataModule`, `domainModule`, `presentationModule`) в `AppModules.kt` и `MatchdayApplication.kt`.
+- **`presentation/`** — 7 типобезопасных `@Serializable` маршрутов (`TournamentsRoute`, `MyClubsRoute`, `TournamentRoute`, `TeamsRoute`, `MatchesRoute`, `StandingsRoute`, `ScoreRoute`), `AppNavGraph`, ViewModels (`AppViewModel`, `ClubSearchViewModel`, `SavedClubsViewModel`) и Compose-экраны.
 
 ## Технологии
 
-- Kotlin
-- Jetpack Compose + Material 3
-- Clean Architecture (Domain / Data / Presentation) + MVVM
-- Koin (`koin-android`)
-- Type-Safe Navigation Compose (`2.10.2`, `@Serializable` + `kotlin-serialization`)
-- `StateFlow` и `collectAsStateWithLifecycle`
-- JUnit 4 и Compose UI Testing
+- Kotlin, Coroutines & `Flow` / `StateFlow`
+- Jetpack Compose + Material 3 + Type-Safe Navigation Compose
+- Clean Architecture + MVVM + Koin (`koin-android`, `koin-compose-viewmodel`)
+- Retrofit 3 + Kotlinx Serialization (OpenLigaDB REST API)
+- Coil 3 (`coil-compose`, `coil-network-okhttp`, `coil-svg`)
+- Room (`2.8.5` + KSP) и Preferences DataStore (`1.1.7`)
+- JUnit 4, Coroutines Test и Compose / Android Instrumentation Tests
 
 ## Источник данных для поиска клубов
 
-[OpenLigaDB](https://api.openligadb.de/index.html) предоставляет каталоги клубов без регистрации. MATCHDAY загружает через Retrofit каталоги АПЛ, Бундеслиги и Лиги Европы сезона 2026/27 и Лиги чемпионов сезона 2025/26. Поиск совпадает с частью полного или короткого названия без учёта регистра и диакритических знаков. Результаты идут по алфавиту.
-
-Для проверки ответа API откройте [каталог Лиги чемпионов](https://api.openligadb.de/getavailableteams/ucl/2025) и найдите `FK Kairat`. Поля `teamId`, `teamName` и `teamIconUrl` преобразуются в `Club(id, name, badgeUrl)`. У клуба может отсутствовать HTTPS-ссылка на эмблему.
-
-ViewModel может получить `SearchClubsUseCase` через Koin. Вызов `searchClubs(query)` выполняется из корутины. Пустой список означает, что совпадений нет. Сетевые ошибки передаются как `ClubSearchException`. При сбое экран может показать сообщение об ошибке и предложить повторить запрос.
-
-Данные предоставлены [OpenLigaDB по лицензии ODbL 1.0](https://www.openligadb.de/en/license).
+[OpenLigaDB](https://api.openligadb.de/index.html) предоставляет каталоги клубов без регистрации. MATCHDAY загружает каталоги АПЛ, Бундеслиги и Лиги Европы сезона 2026/27 и Лиги чемпионов сезона 2025/26, объединяя дубликаты по `teamId` и сопоставляя запросы без учёта регистра и диакритических знаков. Данные предоставлены [OpenLigaDB по лицензии ODbL 1.0](https://www.openligadb.de/en/license).
 
 ## Запуск и проверка
 
-1. Откройте проект в Android Studio.
-2. Дождитесь завершения Gradle Sync.
-3. Выберите Android Emulator или реальное устройство и запустите конфигурацию `app`.
+1. Откройте проект в Android Studio и дождитесь завершения Gradle Sync.
+2. Запустите конфигурацию `app` на Android Emulator или физическом устройстве.
 
 Проверка сборки и тестов из терминала (Windows / PowerShell):
 

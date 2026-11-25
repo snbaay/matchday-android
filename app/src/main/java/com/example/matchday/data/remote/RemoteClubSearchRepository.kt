@@ -7,9 +7,10 @@ import java.io.IOException
 import java.net.SocketTimeoutException
 import java.text.Normalizer
 import java.util.Locale
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.supervisorScope
 import kotlinx.serialization.SerializationException
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import retrofit2.HttpException
@@ -42,20 +43,29 @@ internal class RemoteClubSearchRepository(
             .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER, Club::name).thenBy(Club::id))
     }
 
-    private suspend fun loadCatalogs(): List<ClubDto> = try {
-        coroutineScope {
-            catalogSeasons.map { (league, season) ->
-                async { api.listClubs(league, season) }
-            }.awaitAll().flatten()
+    private suspend fun loadCatalogs(): List<ClubDto> = supervisorScope {
+        val results = catalogSeasons.map { (league, season) ->
+            async {
+                runCatching { api.listClubs(league, season) }
+                    .onFailure { if (it is CancellationException) throw it }
+            }
+        }.awaitAll()
+
+        val successes = results.mapNotNull(Result<List<ClubDto>>::getOrNull)
+        if (successes.isNotEmpty()) {
+            successes.flatten()
+        } else {
+            throw mapCatalogFailure(results.first().exceptionOrNull()!!)
         }
-    } catch (error: HttpException) {
-        throw ClubSearchException.Http(error.code(), error)
-    } catch (error: SerializationException) {
-        throw ClubSearchException.InvalidResponse(error)
-    } catch (error: SocketTimeoutException) {
-        throw ClubSearchException.Timeout(error)
-    } catch (error: IOException) {
-        throw ClubSearchException.Network(error)
+    }
+
+    private fun mapCatalogFailure(error: Throwable): Throwable = when (error) {
+        is CancellationException -> error
+        is HttpException -> ClubSearchException.Http(error.code(), error)
+        is SerializationException -> ClubSearchException.InvalidResponse(error)
+        is SocketTimeoutException -> ClubSearchException.Timeout(error)
+        is IOException -> ClubSearchException.Network(error)
+        else -> error
     }
 }
 
