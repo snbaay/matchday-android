@@ -69,6 +69,7 @@ fun AppNavGraph(appViewModel: AppViewModel, modifier: Modifier = Modifier) {
             MyClubsScreen(
                 state = state,
                 onBack = onBack,
+                onSortOrderChange = savedClubs::changeSortOrder,
                 onUpdateNote = savedClubs::updateNote,
                 onDeleteClub = savedClubs::delete,
                 snackbarHostState = rememberSavedClubsSnackbar(savedClubs)
