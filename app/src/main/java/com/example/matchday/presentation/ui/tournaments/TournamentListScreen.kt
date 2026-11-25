@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -34,7 +35,8 @@ import com.example.matchday.domain.model.Tournament
 fun TournamentListScreen(
     tournaments: List<Tournament>,
     onCreateTournament: (String) -> Result<String>,
-    onOpenTournament: (String) -> Unit
+    onOpenTournament: (String) -> Unit,
+    onOpenMyClubs: (() -> Unit)? = null
 ) {
     var showCreateDialog by rememberSaveable { mutableStateOf(false) }
     var tournamentName by rememberSaveable { mutableStateOf("") }
@@ -62,6 +64,13 @@ fun TournamentListScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(stringResource(R.string.create_tournament_button))
+                }
+            }
+            if (onOpenMyClubs != null) {
+                item {
+                    OutlinedButton(onClick = onOpenMyClubs, modifier = Modifier.fillMaxWidth()) {
+                        Text(stringResource(R.string.my_clubs))
+                    }
                 }
             }
             if (tournaments.isEmpty()) {

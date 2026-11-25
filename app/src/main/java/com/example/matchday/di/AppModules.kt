@@ -2,26 +2,36 @@ package com.example.matchday.di
 
 import androidx.room.Room
 import com.example.matchday.data.InMemoryTournamentRepository
+import com.example.matchday.data.local.DataStoreClubSortPreferences
 import com.example.matchday.data.local.InMemoryTournamentDataSource
 import com.example.matchday.data.local.LocalSavedClubsRepository
 import com.example.matchday.data.local.SavedClubDao
 import com.example.matchday.data.local.SavedClubsDatabase
+import com.example.matchday.data.local.clubPreferencesDataStore
 import com.example.matchday.data.remote.ClubSearchApi
 import com.example.matchday.data.remote.RemoteClubSearchRepository
 import com.example.matchday.data.remote.createClubSearchApi
 import com.example.matchday.domain.repository.ClubSearchRepository
+import com.example.matchday.domain.repository.ClubSortPreferences
 import com.example.matchday.domain.repository.SavedClubsRepository
 import com.example.matchday.domain.repository.TournamentRepository
 import com.example.matchday.domain.usecase.AddTeamUseCase
 import com.example.matchday.domain.usecase.CreateMatchUseCase
 import com.example.matchday.domain.usecase.CreateTournamentUseCase
 import com.example.matchday.domain.usecase.CalculateStandingsUseCase
+import com.example.matchday.domain.usecase.DeleteSavedClubUseCase
 import com.example.matchday.domain.usecase.GetStandingsUseCase
+import com.example.matchday.domain.usecase.ObserveClubSortOrderUseCase
+import com.example.matchday.domain.usecase.ObserveSavedClubsUseCase
 import com.example.matchday.domain.usecase.ObserveTournamentsUseCase
+import com.example.matchday.domain.usecase.SaveClubUseCase
 import com.example.matchday.domain.usecase.SaveScoreUseCase
 import com.example.matchday.domain.usecase.SearchClubsUseCase
+import com.example.matchday.domain.usecase.SetClubSortOrderUseCase
+import com.example.matchday.domain.usecase.UpdateClubNoteUseCase
 import com.example.matchday.presentation.viewmodel.AppViewModel
 import com.example.matchday.presentation.viewmodel.ClubSearchViewModel
+import com.example.matchday.presentation.viewmodel.SavedClubsViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
@@ -42,6 +52,7 @@ val dataModule = module {
     }
     single<SavedClubDao> { get<SavedClubsDatabase>().savedClubDao() }
     singleOf(::LocalSavedClubsRepository) bind SavedClubsRepository::class
+    single<ClubSortPreferences> { DataStoreClubSortPreferences(androidContext().clubPreferencesDataStore) }
 }
 
 val domainModule = module {
@@ -53,9 +64,16 @@ val domainModule = module {
     singleOf(::CalculateStandingsUseCase)
     singleOf(::GetStandingsUseCase)
     singleOf(::SearchClubsUseCase)
+    singleOf(::ObserveSavedClubsUseCase)
+    singleOf(::SaveClubUseCase)
+    singleOf(::UpdateClubNoteUseCase)
+    singleOf(::DeleteSavedClubUseCase)
+    singleOf(::ObserveClubSortOrderUseCase)
+    singleOf(::SetClubSortOrderUseCase)
 }
 
 val presentationModule = module {
     viewModelOf(::AppViewModel)
     viewModelOf(::ClubSearchViewModel)
+    viewModelOf(::SavedClubsViewModel)
 }
