@@ -44,7 +44,9 @@ fun AppNavGraph(appViewModel: AppViewModel, modifier: Modifier = Modifier) {
         when (event) {
             is NavigationEvent.OpenTournament -> navController.navigate(TournamentRoute(event.tournamentId))
             is NavigationEvent.OpenTeams -> navController.navigate(TeamsRoute(event.tournamentId))
-            NavigationEvent.OpenMyClubs -> navController.navigate(MyClubsRoute) { launchSingleTop = true }
+            is NavigationEvent.OpenMyClubs -> navController.navigate(MyClubsRoute(event.tournamentId)) {
+                launchSingleTop = true
+            }
             is NavigationEvent.OpenMatches -> navController.navigate(MatchesRoute(event.tournamentId))
             is NavigationEvent.OpenStandings -> navController.navigate(StandingsRoute(event.tournamentId))
             is NavigationEvent.OpenScore -> navController.navigate(ScoreRoute(event.matchId))
@@ -52,7 +54,6 @@ fun AppNavGraph(appViewModel: AppViewModel, modifier: Modifier = Modifier) {
         }
     }
     val onBack: () -> Unit = { onEvent(NavigationEvent.Back) }
-    val onOpenMyClubs: () -> Unit = { onEvent(NavigationEvent.OpenMyClubs) }
 
     NavHost(navController, startDestination = TournamentsRoute, modifier = modifier) {
         composable<TournamentsRoute> {
@@ -60,20 +61,27 @@ fun AppNavGraph(appViewModel: AppViewModel, modifier: Modifier = Modifier) {
                 tournaments = data.tournaments,
                 onCreateTournament = appViewModel::createTournament,
                 onOpenTournament = { onEvent(NavigationEvent.OpenTournament(it)) },
-                onOpenMyClubs = onOpenMyClubs
+                onOpenMyClubs = { onEvent(NavigationEvent.OpenMyClubs()) }
             )
         }
         composable<MyClubsRoute> { entry ->
-            val savedClubs = koinViewModel<SavedClubsViewModel>(viewModelStoreOwner = entry)
-            val state by savedClubs.uiState.collectAsStateWithLifecycle()
-            MyClubsScreen(
-                state = state,
-                onBack = onBack,
-                onSortOrderChange = savedClubs::changeSortOrder,
-                onUpdateNote = savedClubs::updateNote,
-                onDeleteClub = savedClubs::delete,
-                snackbarHostState = rememberSavedClubsSnackbar(savedClubs)
-            )
+            val tournamentId = entry.toRoute<MyClubsRoute>().tournamentId
+            val tournament = data.tournaments.find { it.id == tournamentId }
+            if (tournamentId != null && tournament == null) MissingItemScreen(onBack) else {
+                val savedClubs = koinViewModel<SavedClubsViewModel>(viewModelStoreOwner = entry)
+                val state by savedClubs.uiState.collectAsStateWithLifecycle()
+                MyClubsScreen(
+                    state = state,
+                    onBack = onBack,
+                    onSortOrderChange = savedClubs::changeSortOrder,
+                    onUpdateNote = savedClubs::updateNote,
+                    onDeleteClub = savedClubs::delete,
+                    snackbarHostState = rememberSavedClubsSnackbar(savedClubs),
+                    tournamentName = tournament?.name,
+                    tournamentTeams = data.teams.filter { it.tournamentId == tournamentId },
+                    onAddTeam = tournament?.let { { name -> appViewModel.addTeam(it.id, name) } }
+                )
+            }
         }
         composable<TournamentRoute> { entry ->
             val id = entry.toRoute<TournamentRoute>().tournamentId
@@ -105,8 +113,8 @@ fun AppNavGraph(appViewModel: AppViewModel, modifier: Modifier = Modifier) {
                     snackbarHostState = rememberSavedClubsSnackbar(savedClubs),
                     clubSearch = {
                         item(key = "my-clubs-link") {
-                            TextButton(onClick = onOpenMyClubs) {
-                                Text(stringResource(R.string.my_clubs))
+                            TextButton(onClick = { onEvent(NavigationEvent.OpenMyClubs(id)) }) {
+                                Text(stringResource(R.string.add_from_my_clubs))
                             }
                         }
                         clubSearchItems(
@@ -129,7 +137,8 @@ fun AppNavGraph(appViewModel: AppViewModel, modifier: Modifier = Modifier) {
                 matches = data.matches.filter { it.tournamentId == id },
                 onCreateMatch = { home, away -> appViewModel.createMatch(id, home, away) },
                 onOpenScore = { onEvent(NavigationEvent.OpenScore(it)) },
-                onBack = onBack
+                onBack = onBack,
+                onAddFromMyClubs = { onEvent(NavigationEvent.OpenMyClubs(id)) }
             )
         }
         composable<ScoreRoute> { entry ->
