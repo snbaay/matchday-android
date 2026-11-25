@@ -14,3 +14,7 @@ class SaveClubUseCase(private val repository: SavedClubsRepository) {
 class UpdateClubNoteUseCase(private val repository: SavedClubsRepository) {
     suspend operator fun invoke(clubId: String, note: String) = repository.updateNote(clubId, note)
 }
+
+class DeleteSavedClubUseCase(private val repository: SavedClubsRepository) {
+    suspend operator fun invoke(clubId: String) = repository.deleteClub(clubId)
+}

@@ -16,6 +16,7 @@ import com.example.matchday.domain.usecase.AddTeamUseCase
 import com.example.matchday.domain.usecase.CreateMatchUseCase
 import com.example.matchday.domain.usecase.CreateTournamentUseCase
 import com.example.matchday.domain.usecase.CalculateStandingsUseCase
+import com.example.matchday.domain.usecase.DeleteSavedClubUseCase
 import com.example.matchday.domain.usecase.GetStandingsUseCase
 import com.example.matchday.domain.usecase.ObserveSavedClubsUseCase
 import com.example.matchday.domain.usecase.ObserveTournamentsUseCase
@@ -60,6 +61,7 @@ val domainModule = module {
     singleOf(::ObserveSavedClubsUseCase)
     singleOf(::SaveClubUseCase)
     singleOf(::UpdateClubNoteUseCase)
+    singleOf(::DeleteSavedClubUseCase)
 }
 
 val presentationModule = module {

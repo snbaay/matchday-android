@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.matchday.domain.model.Club
 import com.example.matchday.domain.model.SavedClub
+import com.example.matchday.domain.usecase.DeleteSavedClubUseCase
 import com.example.matchday.domain.usecase.ObserveSavedClubsUseCase
 import com.example.matchday.domain.usecase.SaveClubUseCase
 import com.example.matchday.domain.usecase.UpdateClubNoteUseCase
@@ -30,7 +31,8 @@ sealed interface SavedClubsMessage {
 class SavedClubsViewModel(
     observeSavedClubs: ObserveSavedClubsUseCase,
     private val saveClub: SaveClubUseCase,
-    private val updateClubNote: UpdateClubNoteUseCase
+    private val updateClubNote: UpdateClubNoteUseCase,
+    private val deleteSavedClub: DeleteSavedClubUseCase
 ) : ViewModel() {
     val uiState = observeSavedClubs().map<List<SavedClub>, SavedClubsUiState> { clubs ->
         SavedClubsUiState.Content(clubs)
@@ -45,6 +47,8 @@ class SavedClubsViewModel(
     fun save(club: Club) = write(SavedClubsMessage.ClubSaved(club.name)) { saveClub(club) }
 
     fun updateNote(clubId: String, note: String) = write { updateClubNote(clubId, note) }
+
+    fun delete(clubId: String) = write { deleteSavedClub(clubId) }
 
     private fun write(success: SavedClubsMessage? = null, operation: suspend () -> Unit) {
         viewModelScope.launch {
