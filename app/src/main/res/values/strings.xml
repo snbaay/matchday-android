@@ -36,6 +36,8 @@
     <string name="add_teams_to_tournament">Add teams to %1$s</string>
     <string name="add_club_to_tournament">Add to tournament</string>
     <string name="club_in_tournament">In tournament</string>
+    <string name="open_teams_search">Search clubs in Teams</string>
+    <string name="saved">Saved</string>
     <string name="saved_clubs_empty">No saved clubs yet. Save a club from search in Teams.</string>
     <string name="saved_clubs_load_failed">Could not load your saved clubs.</string>
     <string name="saved_club_confirmation">Saved %1$s to My Clubs</string>

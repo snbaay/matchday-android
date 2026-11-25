@@ -106,6 +106,17 @@ class ClubSearchViewModelTest {
         )
     }
 
+    @Test
+    fun unexpectedRuntimeExceptionTransitionsToErrorInsteadOfStayingLoading() = runTest {
+        val viewModel = createViewModel { throw IllegalStateException("Unexpected failure") }
+
+        viewModel.updateQuery("Arsenal")
+        viewModel.search()
+        runCurrent()
+
+        assertEquals(ClubSearchResult.Error("Arsenal"), viewModel.uiState.value.result)
+    }
+
     private fun createViewModel(respond: suspend (String) -> List<Club>): ClubSearchViewModel {
         val repository = object : ClubSearchRepository {
             override suspend fun search(query: String): List<Club> = respond(query)

@@ -3,8 +3,8 @@ package com.example.matchday.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.matchday.domain.model.Club
-import com.example.matchday.domain.model.ClubSearchException
 import com.example.matchday.domain.usecase.SearchClubsUseCase
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -50,7 +50,9 @@ class ClubSearchViewModel(
             val result = try {
                 val clubs = searchClubs(query)
                 if (clubs.isEmpty()) ClubSearchResult.Empty else ClubSearchResult.Success(clubs)
-            } catch (_: ClubSearchException) {
+            } catch (error: CancellationException) {
+                throw error
+            } catch (_: Exception) {
                 ClubSearchResult.Error(query)
             }
             _uiState.update { it.copy(result = result) }

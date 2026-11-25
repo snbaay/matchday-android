@@ -32,6 +32,7 @@ import com.example.matchday.presentation.ui.tournaments.TournamentListScreen
 import com.example.matchday.presentation.viewmodel.AppViewModel
 import com.example.matchday.presentation.viewmodel.ClubSearchViewModel
 import com.example.matchday.presentation.viewmodel.SavedClubsMessage
+import com.example.matchday.presentation.viewmodel.SavedClubsUiState
 import com.example.matchday.presentation.viewmodel.SavedClubsViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -79,7 +80,14 @@ fun AppNavGraph(appViewModel: AppViewModel, modifier: Modifier = Modifier) {
                     snackbarHostState = rememberSavedClubsSnackbar(savedClubs),
                     tournamentName = tournament?.name,
                     tournamentTeams = data.teams.filter { it.tournamentId == tournamentId },
-                    onAddTeam = tournament?.let { { name -> appViewModel.addTeam(it.id, name) } }
+                    onAddTeam = tournament?.let { { name -> appViewModel.addTeam(it.id, name) } },
+                    onOpenTeams = tournament?.let {
+                        {
+                            navController.navigate(TeamsRoute(it.id)) {
+                                launchSingleTop = true
+                            }
+                        }
+                    }
                 )
             }
         }
@@ -105,6 +113,11 @@ fun AppNavGraph(appViewModel: AppViewModel, modifier: Modifier = Modifier) {
                 val clubSearch = koinViewModel<ClubSearchViewModel>(viewModelStoreOwner = entry)
                 val savedClubs = koinViewModel<SavedClubsViewModel>(viewModelStoreOwner = entry)
                 val searchState by clubSearch.uiState.collectAsStateWithLifecycle()
+                val savedClubsState by savedClubs.uiState.collectAsStateWithLifecycle()
+                val savedClubIds = (savedClubsState as? SavedClubsUiState.Content)
+                    ?.clubs
+                    ?.mapTo(mutableSetOf()) { it.id }
+                    .orEmpty()
                 TeamsScreen(
                     tournamentName = tournament.name,
                     teams = data.teams.filter { it.tournamentId == id },
@@ -122,7 +135,8 @@ fun AppNavGraph(appViewModel: AppViewModel, modifier: Modifier = Modifier) {
                             onQueryChange = clubSearch::updateQuery,
                             onSearch = clubSearch::search,
                             onRetry = clubSearch::retry,
-                            onSaveClub = savedClubs::save
+                            onSaveClub = savedClubs::save,
+                            savedClubIds = savedClubIds
                         )
                     }
                 )
