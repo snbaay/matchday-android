@@ -21,11 +21,13 @@ import com.example.matchday.domain.usecase.CreateTournamentUseCase
 import com.example.matchday.domain.usecase.CalculateStandingsUseCase
 import com.example.matchday.domain.usecase.DeleteSavedClubUseCase
 import com.example.matchday.domain.usecase.GetStandingsUseCase
+import com.example.matchday.domain.usecase.ObserveClubSortOrderUseCase
 import com.example.matchday.domain.usecase.ObserveSavedClubsUseCase
 import com.example.matchday.domain.usecase.ObserveTournamentsUseCase
 import com.example.matchday.domain.usecase.SaveClubUseCase
 import com.example.matchday.domain.usecase.SaveScoreUseCase
 import com.example.matchday.domain.usecase.SearchClubsUseCase
+import com.example.matchday.domain.usecase.SetClubSortOrderUseCase
 import com.example.matchday.domain.usecase.UpdateClubNoteUseCase
 import com.example.matchday.presentation.viewmodel.AppViewModel
 import com.example.matchday.presentation.viewmodel.ClubSearchViewModel
@@ -66,6 +68,8 @@ val domainModule = module {
     singleOf(::SaveClubUseCase)
     singleOf(::UpdateClubNoteUseCase)
     singleOf(::DeleteSavedClubUseCase)
+    singleOf(::ObserveClubSortOrderUseCase)
+    singleOf(::SetClubSortOrderUseCase)
 }
 
 val presentationModule = module {
