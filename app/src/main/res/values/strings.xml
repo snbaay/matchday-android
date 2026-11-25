@@ -37,6 +37,8 @@
     <string name="saved_club_confirmation">Saved %1$s to My Clubs</string>
     <string name="saved_club_note">Note</string>
     <string name="saved_club_edit_note">Edit note</string>
+    <string name="saved_club_remove">Remove</string>
+    <string name="saved_club_remove_title">Remove %1$s from My Clubs?</string>
     <string name="matches">Matches</string>
     <string name="standings">Standings</string>
     <string name="teams_title">Teams: %1$s</string>

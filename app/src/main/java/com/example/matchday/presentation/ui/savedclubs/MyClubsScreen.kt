@@ -38,9 +38,11 @@ internal fun MyClubsScreen(
     state: SavedClubsUiState,
     onBack: () -> Unit,
     onUpdateNote: (String, String) -> Unit,
+    onDeleteClub: (String) -> Unit,
     snackbarHostState: SnackbarHostState
 ) {
     var editingClubId by rememberSaveable { mutableStateOf<String?>(null) }
+    var removingClubId by rememberSaveable { mutableStateOf<String?>(null) }
     var noteDraft by rememberSaveable { mutableStateOf("") }
 
     Scaffold(
@@ -67,7 +69,8 @@ internal fun MyClubsScreen(
                             onEdit = {
                                 noteDraft = club.note
                                 editingClubId = club.id
-                            }
+                            },
+                            onRemove = { removingClubId = club.id }
                         )
                     }
                 }
@@ -100,11 +103,26 @@ internal fun MyClubsScreen(
                 }
             )
         }
+        state.clubs.find { it.id == removingClubId }?.let { club ->
+            AlertDialog(
+                onDismissRequest = { removingClubId = null },
+                title = { Text(stringResource(R.string.saved_club_remove_title, club.name)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        onDeleteClub(club.id)
+                        removingClubId = null
+                    }) { Text(stringResource(R.string.saved_club_remove)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { removingClubId = null }) { Text(stringResource(R.string.cancel)) }
+                }
+            )
+        }
     }
 }
 
 @Composable
-private fun SavedClubCard(club: SavedClub, onEdit: () -> Unit) {
+private fun SavedClubCard(club: SavedClub, onEdit: () -> Unit, onRemove: () -> Unit) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(club.name, style = MaterialTheme.typography.titleMedium)
@@ -113,6 +131,7 @@ private fun SavedClubCard(club: SavedClub, onEdit: () -> Unit) {
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = onEdit) { Text(stringResource(R.string.saved_club_edit_note)) }
+                TextButton(onClick = onRemove) { Text(stringResource(R.string.saved_club_remove)) }
             }
         }
     }

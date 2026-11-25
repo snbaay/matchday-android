@@ -70,6 +70,7 @@ fun AppNavGraph(appViewModel: AppViewModel, modifier: Modifier = Modifier) {
                 state = state,
                 onBack = onBack,
                 onUpdateNote = savedClubs::updateNote,
+                onDeleteClub = savedClubs::delete,
                 snackbarHostState = rememberSavedClubsSnackbar(savedClubs)
             )
         }
