@@ -23,17 +23,22 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.matchday.R
 import com.example.matchday.domain.model.ClubSortOrder
 import com.example.matchday.domain.model.SavedClub
+import com.example.matchday.domain.model.Team
 import com.example.matchday.presentation.ui.components.AppTopBar
 import com.example.matchday.presentation.ui.components.EmptyState
+import com.example.matchday.presentation.ui.errorText
 import com.example.matchday.presentation.viewmodel.SavedClubsUiState
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun MyClubsScreen(
@@ -42,11 +47,16 @@ internal fun MyClubsScreen(
     onSortOrderChange: (ClubSortOrder) -> Unit,
     onUpdateNote: (String, String) -> Unit,
     onDeleteClub: (String) -> Unit,
-    snackbarHostState: SnackbarHostState
+    snackbarHostState: SnackbarHostState,
+    tournamentName: String? = null,
+    tournamentTeams: List<Team> = emptyList(),
+    onAddTeam: ((String) -> Result<String>)? = null
 ) {
     var editingClubId by rememberSaveable { mutableStateOf<String?>(null) }
     var removingClubId by rememberSaveable { mutableStateOf<String?>(null) }
     var noteDraft by rememberSaveable { mutableStateOf("") }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = { AppTopBar(title = stringResource(R.string.my_clubs), onBack = onBack) },
@@ -63,6 +73,14 @@ internal fun MyClubsScreen(
                     Text(stringResource(R.string.saved_clubs_load_failed), color = MaterialTheme.colorScheme.error)
                 }
                 is SavedClubsUiState.Content -> {
+                    if (tournamentName != null) {
+                        item {
+                            Text(
+                                stringResource(R.string.add_teams_to_tournament, tournamentName),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
+                    }
                     item { SortControls(state.sortOrder, onSortOrderChange) }
                     if (state.clubs.isEmpty()) {
                         item { EmptyState(message = stringResource(R.string.saved_clubs_empty)) }
@@ -70,6 +88,18 @@ internal fun MyClubsScreen(
                     items(state.clubs, key = { it.id }) { club ->
                         SavedClubCard(
                             club = club,
+                            inTournament = tournamentTeams.any {
+                                it.name.equals(club.name.trim(), ignoreCase = true)
+                            },
+                            onAddTeam = onAddTeam?.let { addTeam ->
+                                {
+                                    addTeam(club.name).onFailure { error ->
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(context.getString(error.errorText()))
+                                        }
+                                    }
+                                }
+                            },
                             onEdit = {
                                 noteDraft = club.note
                                 editingClubId = club.id
@@ -146,12 +176,23 @@ private fun SortControls(selected: ClubSortOrder, onSortOrderChange: (ClubSortOr
 }
 
 @Composable
-private fun SavedClubCard(club: SavedClub, onEdit: () -> Unit, onRemove: () -> Unit) {
+private fun SavedClubCard(
+    club: SavedClub,
+    inTournament: Boolean,
+    onAddTeam: (() -> Unit)?,
+    onEdit: () -> Unit,
+    onRemove: () -> Unit
+) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(club.name, style = MaterialTheme.typography.titleMedium)
             if (club.note.isNotBlank()) {
                 Text(club.note, style = MaterialTheme.typography.bodyMedium)
+            }
+            if (onAddTeam != null) {
+                TextButton(onClick = onAddTeam, enabled = !inTournament) {
+                    Text(stringResource(if (inTournament) R.string.club_in_tournament else R.string.add_club_to_tournament))
+                }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = onEdit) { Text(stringResource(R.string.saved_club_edit_note)) }

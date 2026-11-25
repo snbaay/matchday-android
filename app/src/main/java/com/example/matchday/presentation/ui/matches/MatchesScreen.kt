@@ -50,7 +50,8 @@ fun MatchesScreen(
     matches: List<Match>,
     onCreateMatch: (String, String) -> Result<String>,
     onOpenScore: (String) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onAddFromMyClubs: (() -> Unit)? = null
 ) {
     val teamNamesById = teams.associate { it.id to it.name }
     val canCreateMatch = teams.size >= 2
@@ -103,6 +104,11 @@ fun MatchesScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(stringResource(R.string.create_match_button))
+            }
+            if (onAddFromMyClubs != null) {
+                OutlinedButton(onClick = onAddFromMyClubs, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.add_from_my_clubs))
+                }
             }
 
             if (!canCreateMatch) {
