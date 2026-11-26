@@ -3,7 +3,7 @@ package com.example.matchday.data.remote
 import kotlinx.serialization.Serializable
 
 @Serializable
-internal data class ClubDto(
+data class ClubDto(
     val teamId: Int,
     val teamName: String,
     val shortName: String? = null,

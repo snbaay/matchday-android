@@ -28,7 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.example.matchday.R
-import com.example.matchday.presentation.ui.errorText
+import com.example.matchday.presentation.extension.errorText
 import com.example.matchday.domain.model.Tournament
 
 @Composable

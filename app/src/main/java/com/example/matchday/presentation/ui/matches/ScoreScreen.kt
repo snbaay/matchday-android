@@ -35,7 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.example.matchday.R
-import com.example.matchday.presentation.ui.errorText
+import com.example.matchday.presentation.extension.errorText
 import com.example.matchday.domain.model.Match
 import com.example.matchday.presentation.ui.theme.MatchdayTheme
 

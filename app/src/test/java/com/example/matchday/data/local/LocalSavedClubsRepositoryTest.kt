@@ -1,5 +1,6 @@
 package com.example.matchday.data.local
 
+import com.example.matchday.data.repository.LocalSavedClubsRepository
 import com.example.matchday.domain.model.Club
 import com.example.matchday.domain.model.SavedClub
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -94,7 +95,7 @@ class LocalSavedClubsRepositoryTest {
     }
 }
 
-internal class FakeSavedClubDao : SavedClubDao {
+class FakeSavedClubDao : SavedClubDao {
     private val rowsById = MutableStateFlow<Map<String, SavedClubEntity>>(emptyMap())
 
     override suspend fun insert(club: SavedClubEntity) {

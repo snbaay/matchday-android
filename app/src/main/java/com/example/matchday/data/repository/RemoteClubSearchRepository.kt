@@ -1,5 +1,8 @@
-package com.example.matchday.data.remote
+package com.example.matchday.data.repository
 
+import com.example.matchday.data.mapper.toDomainClub
+import com.example.matchday.data.remote.ClubDto
+import com.example.matchday.data.remote.ClubSearchApi
 import com.example.matchday.domain.model.Club
 import com.example.matchday.domain.model.ClubSearchException
 import com.example.matchday.domain.repository.ClubSearchRepository
@@ -12,33 +15,24 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.supervisorScope
 import kotlinx.serialization.SerializationException
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import retrofit2.HttpException
 
-internal class RemoteClubSearchRepository(
+class RemoteClubSearchRepository(
     private val api: ClubSearchApi
 ) : ClubSearchRepository {
     override suspend fun search(query: String): List<Club> {
-        val name = normalizeClubName(query)
-        if (name.isEmpty()) return emptyList()
+        val normalizedQuery = normalizeClubName(query)
+        if (normalizedQuery.isEmpty()) return emptyList()
 
         return loadCatalogs()
             .groupBy(ClubDto::teamId)
             .values
             .mapNotNull { clubEntries ->
                 val matches = clubEntries.any { entry ->
-                    normalizeClubName(entry.teamName).contains(name) ||
-                        entry.shortName?.let(::normalizeClubName)?.contains(name) == true
+                    normalizeClubName(entry.teamName).contains(normalizedQuery) ||
+                        entry.shortName?.let(::normalizeClubName)?.contains(normalizedQuery) == true
                 }
-                if (!matches) return@mapNotNull null
-                val primary = clubEntries.first()
-                val badgeUrl = clubEntries.firstNotNullOfOrNull { entry ->
-                    entry.teamIconUrl?.trim()?.toHttpUrlOrNull()
-                        ?.takeIf { it.isHttps }
-                        ?.toString()
-                }
-
-                Club(primary.teamId.toString(), primary.teamName, badgeUrl)
+                if (matches) clubEntries.toDomainClub() else null
             }
             .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER, Club::name).thenBy(Club::id))
     }
@@ -76,11 +70,28 @@ private val catalogSeasons = mapOf(
     "uel2026" to 2026
 )
 
-private val combiningMarks = Regex("\\p{M}+")
-private val nameSeparators = Regex("[^\\p{L}\\p{N}]+")
+private fun normalizeClubName(value: String): String {
+    val decomposed = Normalizer.normalize(value.lowercase(Locale.ROOT), Normalizer.Form.NFKD)
+    return buildString(decomposed.length) {
+        var needsSpace = false
+        for (ch in decomposed) {
+            if (isCombiningMark(ch)) continue
+            if (ch.isLetterOrDigit()) {
+                if (needsSpace && isNotEmpty()) {
+                    append(' ')
+                }
+                append(ch)
+                needsSpace = false
+            } else {
+                needsSpace = true
+            }
+        }
+    }
+}
 
-private fun normalizeClubName(value: String): String =
-    Normalizer.normalize(value.lowercase(Locale.ROOT), Normalizer.Form.NFKD)
-        .replace(combiningMarks, "")
-        .replace(nameSeparators, " ")
-        .trim()
+private fun isCombiningMark(ch: Char): Boolean = when (Character.getType(ch).toByte()) {
+    Character.NON_SPACING_MARK,
+    Character.COMBINING_SPACING_MARK,
+    Character.ENCLOSING_MARK -> true
+    else -> false
+}

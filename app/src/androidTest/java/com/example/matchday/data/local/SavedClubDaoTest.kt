@@ -3,6 +3,7 @@ package com.example.matchday.data.local
 import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.example.matchday.data.repository.LocalSavedClubsRepository
 import com.example.matchday.domain.model.Club
 import com.example.matchday.domain.model.SavedClub
 import kotlinx.coroutines.flow.first
