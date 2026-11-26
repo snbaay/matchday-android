@@ -1,4 +1,4 @@
-package com.example.matchday.presentation.ui
+package com.example.matchday.presentation.extension
 
 import androidx.annotation.StringRes
 import com.example.matchday.R

@@ -8,6 +8,8 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.example.matchday.data.repository.DataStoreClubSortPreferences
+import com.example.matchday.data.repository.LocalSavedClubsRepository
 import com.example.matchday.domain.model.Club
 import com.example.matchday.domain.model.ClubSortOrder
 import com.example.matchday.domain.model.SavedClub

@@ -17,13 +17,16 @@ import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import com.example.matchday.R
 
+private const val USER_AGENT_HEADER_NAME = "User-Agent"
+private const val WIKIMEDIA_USER_AGENT = "MATCHDAY-Android/1.0 (https://github.com/snbaay/matchday-android)"
+
 // Wikimedia rejects requests with a generic User-Agent.
 private val badgeRequestHeaders = NetworkHeaders.Builder()
-    .set("User-Agent", "MATCHDAY-Android/1.0 (https://github.com/snbaay/matchday-android)")
+    .set(USER_AGENT_HEADER_NAME, WIKIMEDIA_USER_AGENT)
     .build()
 
 @Composable
-internal fun ClubBadge(badgeUrl: String?, modifier: Modifier = Modifier) {
+fun ClubBadge(badgeUrl: String?, modifier: Modifier = Modifier) {
     val fallback = painterResource(R.drawable.ic_club_badge_placeholder)
     val context = LocalPlatformContext.current
     val badgeRequest = remember(context, badgeUrl) {

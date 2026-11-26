@@ -1,6 +1,6 @@
 package com.example.matchday.presentation.viewmodel
 
-import com.example.matchday.data.InMemoryTournamentRepository
+import com.example.matchday.data.repository.InMemoryTournamentRepository
 import com.example.matchday.data.local.InMemoryTournamentDataSource
 import com.example.matchday.domain.usecase.AddTeamUseCase
 import com.example.matchday.domain.usecase.CreateMatchUseCase
