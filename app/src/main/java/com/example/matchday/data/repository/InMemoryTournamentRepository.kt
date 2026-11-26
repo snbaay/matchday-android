@@ -1,21 +1,23 @@
-package com.example.matchday.data
+package com.example.matchday.data.repository
 
+import com.example.matchday.data.local.InMemoryTournamentDataSource
+import com.example.matchday.data.mapper.toDomain
+import com.example.matchday.data.mapper.toDto
 import com.example.matchday.domain.model.AppData
-import com.example.matchday.domain.repository.TournamentRepository
 import com.example.matchday.domain.model.Match
 import com.example.matchday.domain.model.Team
 import com.example.matchday.domain.model.Tournament
 import com.example.matchday.domain.model.TournamentError
 import com.example.matchday.domain.model.TournamentFailure
-import com.example.matchday.data.local.InMemoryTournamentDataSource
-import com.example.matchday.data.local.toDomain
-import com.example.matchday.data.local.toDto
+import com.example.matchday.domain.repository.TournamentRepository
 import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class InMemoryTournamentRepository(private val dataSource: InMemoryTournamentDataSource) : TournamentRepository {
+class InMemoryTournamentRepository(
+    private val dataSource: InMemoryTournamentDataSource
+) : TournamentRepository {
     private val mutableState = MutableStateFlow(dataSource.read().toDomain())
     override val state: StateFlow<AppData> = mutableState.asStateFlow()
 

@@ -1,16 +1,16 @@
 package com.example.matchday.di
 
 import androidx.room.Room
-import com.example.matchday.data.InMemoryTournamentRepository
-import com.example.matchday.data.local.DataStoreClubSortPreferences
+import com.example.matchday.data.extension.clubPreferencesDataStore
 import com.example.matchday.data.local.InMemoryTournamentDataSource
-import com.example.matchday.data.local.LocalSavedClubsRepository
 import com.example.matchday.data.local.SavedClubDao
 import com.example.matchday.data.local.SavedClubsDatabase
-import com.example.matchday.data.local.clubPreferencesDataStore
 import com.example.matchday.data.remote.ClubSearchApi
-import com.example.matchday.data.remote.RemoteClubSearchRepository
 import com.example.matchday.data.remote.createClubSearchApi
+import com.example.matchday.data.repository.DataStoreClubSortPreferences
+import com.example.matchday.data.repository.InMemoryTournamentRepository
+import com.example.matchday.data.repository.LocalSavedClubsRepository
+import com.example.matchday.data.repository.RemoteClubSearchRepository
 import com.example.matchday.domain.repository.ClubSearchRepository
 import com.example.matchday.domain.repository.ClubSortPreferences
 import com.example.matchday.domain.repository.SavedClubsRepository

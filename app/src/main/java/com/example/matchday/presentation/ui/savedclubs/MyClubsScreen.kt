@@ -36,15 +36,15 @@ import com.example.matchday.R
 import com.example.matchday.domain.model.ClubSortOrder
 import com.example.matchday.domain.model.SavedClub
 import com.example.matchday.domain.model.Team
+import com.example.matchday.presentation.extension.errorText
 import com.example.matchday.presentation.ui.components.AppTopBar
 import com.example.matchday.presentation.ui.components.ClubBadge
 import com.example.matchday.presentation.ui.components.EmptyState
-import com.example.matchday.presentation.ui.errorText
 import com.example.matchday.presentation.viewmodel.SavedClubsUiState
 import kotlinx.coroutines.launch
 
 @Composable
-internal fun MyClubsScreen(
+fun MyClubsScreen(
     state: SavedClubsUiState,
     onBack: () -> Unit,
     onSortOrderChange: (ClubSortOrder) -> Unit,

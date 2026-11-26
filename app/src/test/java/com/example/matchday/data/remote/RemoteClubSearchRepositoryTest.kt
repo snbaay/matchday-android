@@ -1,5 +1,6 @@
 package com.example.matchday.data.remote
 
+import com.example.matchday.data.repository.RemoteClubSearchRepository
 import com.example.matchday.domain.model.Club
 import com.example.matchday.domain.model.ClubSearchException
 import java.io.IOException

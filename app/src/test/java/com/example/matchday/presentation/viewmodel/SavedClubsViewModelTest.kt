@@ -1,7 +1,7 @@
 package com.example.matchday.presentation.viewmodel
 
 import com.example.matchday.data.local.FakeSavedClubDao
-import com.example.matchday.data.local.LocalSavedClubsRepository
+import com.example.matchday.data.repository.LocalSavedClubsRepository
 import com.example.matchday.domain.model.Club
 import com.example.matchday.domain.model.ClubSortOrder
 import com.example.matchday.domain.model.SavedClub

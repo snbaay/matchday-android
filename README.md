@@ -38,8 +38,11 @@ Compose Screens → ViewModels (StateFlow) → Domain Use Cases → Repository I
 ### Основные пакеты (`app/src/main/java/com/example/matchday/`)
 
 - **`domain/`** — чистые модели (`Tournament`, `Team`, `Match`, `StandingRow`, `Club`, `SavedClub`, `ClubSortOrder`), контракты репозиториев и use cases (`TournamentUseCases`, `StandingsCalculator`, `SearchClubsUseCase`, `SavedClubUseCases`).
-- **`data/remote/`** — `ClubSearchApi`, `ClubDto` и `RemoteClubSearchRepository` (Retrofit + Kotlinx Serialization).
-- **`data/local/`** — `SavedClubEntity`, `SavedClubDao`, `SavedClubsDatabase`, `LocalSavedClubsRepository` (Room), `DataStoreClubSortPreferences` (Preferences DataStore) и `InMemoryTournamentDataSource`.
+- **`data/remote/`** — `ClubSearchApi` (`OPENLIGA_BASE_URL`) и `ClubDto` (Retrofit + Kotlinx Serialization).
+- **`data/local/`** — `SavedClubEntity`, `SavedClubDao`, `SavedClubsDatabase` (Room), `InMemoryTournamentDataSource` и `TournamentSnapshotDto`.
+- **`data/repository/`** — реализации репозиториев (`InMemoryTournamentRepository`, `RemoteClubSearchRepository`, `LocalSavedClubsRepository`, `DataStoreClubSortPreferences`).
+- **`data/mapper/`** — мапперы между DTO/Entity и доменными моделями (`ClubMapper`, `SavedClubMapper`, `TournamentMappers`).
+- **`data/extension/` и `presentation/extension/`** — extension-свойства и функции (`ContextDataStoreExtensions`, `ThrowableExtensions`).
 - **`di/`** — Koin-модули (`dataModule`, `domainModule`, `presentationModule`) в `AppModules.kt` и `MatchdayApplication.kt`.
 - **`presentation/`** — 7 типобезопасных `@Serializable` маршрутов (`TournamentsRoute`, `MyClubsRoute`, `TournamentRoute`, `TeamsRoute`, `MatchesRoute`, `StandingsRoute`, `ScoreRoute`), `AppNavGraph`, ViewModels (`AppViewModel`, `ClubSearchViewModel`, `SavedClubsViewModel`) и Compose-экраны.
 

@@ -18,7 +18,7 @@ import com.example.matchday.domain.model.Club
 import com.example.matchday.presentation.ui.components.ClubBadge
 
 @Composable
-internal fun ClubResultRow(
+fun ClubResultRow(
     club: Club,
     onSaveClub: ((Club) -> Unit)?,
     isSaved: Boolean = false
